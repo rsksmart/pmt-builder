@@ -1,0 +1,24 @@
+{
+  "name": "pmt-builder",
+  "version": "1.0.0",
+  "description": "PartialMerkleTree builder lib",
+  "main": "pmt-builder.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rsksmart/pmt-builder.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/rsksmart/pmt-builder/issues"
+  },
+  "homepage": "https://github.com/rsksmart/pmt-builder#readme",
+  "dependencies": {
+    "bitcoinjs-lib": "^3.2.0",
+    "chai": "^4.3.4",
+    "mocha": "^8.4.0"
+  }
+}
