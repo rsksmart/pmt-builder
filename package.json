@@ -1,6 +1,6 @@
 {
   "name": "pmt-builder",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "PartialMerkleTree builder lib",
   "main": "pmt-builder.js",
   "scripts": {
@@ -19,6 +19,6 @@
   "dependencies": {
     "bitcoinjs-lib": "^3.2.0",
     "chai": "^4.3.4",
-    "mocha": "^8.4.0"
+    "mocha": "^10.0.0"
   }
 }
