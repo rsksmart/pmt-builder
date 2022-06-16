@@ -99,7 +99,7 @@ const buildPMT = (leaves, filteredHash) => {
         totalTX : leaves.length,
         hashes : hashes,
         flags : parseInt(flags.toString('hex'), 16),
-        hex: `${lpad(leaves.length, 2)}${lpad(hashes.length, 8)}${hashes.map(reverseHex).join('')}${lpad(flags.length, 2)}${flags.toString('hex')}`
+        hex: `${lpad(leaves.length.toString(16), 2)}${lpad(hashes.length.toString(16), 8)}${hashes.map(reverseHex).join('')}${lpad(flags.length.toString(16), 2)}${flags.toString('hex')}`
     };
 };
 
