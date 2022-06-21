@@ -1,6 +1,6 @@
 {
   "name": "pmt-builder",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "PartialMerkleTree builder lib",
   "main": "pmt-builder.js",
   "scripts": {
