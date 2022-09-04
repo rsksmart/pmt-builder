@@ -25,9 +25,7 @@ const buildPMT = (leaves, filteredHash) => {
             filteredInLeaves = true;
             matches.push(1);
         } else {
-            // Although this doesn't make much sense, setting this to 0 produces a PMT that doesn't compute the right merkle root
-            // TODO: investigate why we need to push a 1 here instead of a 0
-            matches.push(1);
+            matches.push(0);
         }
     }
 
