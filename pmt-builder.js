@@ -88,7 +88,7 @@ const buildPMT = (leaves, filteredHash) => {
         traverse(height, 0, leaves, matches);
     } else {
         // If there is only one hash, use that hash as the only value without performing any other operation
-        hashes.push(reverseHex(filteredHash));
+        hashes.push(filteredHash);
         bits.push(1);
     }
 
