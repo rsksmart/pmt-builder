@@ -11,7 +11,7 @@ const combineLeftAndRight = (left, right) => {
     bufRight.reverse();
 
     let bufCombined = Buffer.concat([bufLeft,bufRight]);
-    let bufHashed = sha256(sha256(bufCombined));
+    let bufHashed = sha256(bufCombined);
     bufHashed.reverse();
     return bufHashed.toString('hex');
 };
