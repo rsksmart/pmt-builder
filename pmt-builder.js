@@ -11,8 +11,9 @@ const combineLeftAndRight = (left, right) => {
     bufRight.reverse();
 
     let bufCombined = Buffer.concat([bufLeft,bufRight]);
-    let bufHashed = sha256(sha256(bufCombined));
+    let bufHashed = sha256(bufCombined);
     bufHashed.reverse();
+
     return bufHashed.toString('hex');
 };
 
@@ -25,9 +26,7 @@ const buildPMT = (leaves, filteredHash) => {
             filteredInLeaves = true;
             matches.push(1);
         } else {
-            // Although this doesn't make much sense, setting this to 0 produces a PMT that doesn't compute the right merkle root
-            // TODO: investigate why we need to push a 1 here instead of a 0
-            matches.push(1);
+            matches.push(0);
         }
     }
 
@@ -44,25 +43,28 @@ const buildPMT = (leaves, filteredHash) => {
     };
 
     const hash = (height, pos, leaves) => {
-        if (height === 0)
+        if (height === 0) {
             return leaves[pos];
+        }
     
         const left = hash(height - 1, pos * 2, leaves);
         let right;
     
-        if (pos * 2 + 1 < width(height - 1))
+        if (pos * 2 + 1 < width(height - 1)) {
             right = hash(height - 1, pos * 2 + 1, leaves);
-        else
+        } else {
             right = left;
-    
+        }
+
         return combineLeftAndRight(left, right);
     };
     
     const traverse = (height, pos, leaves, matches) => {
         let parent = 0;
         
-        for (let p = pos << height; p < ((pos + 1) << height) && p < leaves.length; p++)
+        for (let p = pos << height; p < ((pos + 1) << height) && p < leaves.length; p++) {
             parent |= matches[p];
+        }
         
         bits.push(parent);
         
@@ -73,8 +75,9 @@ const buildPMT = (leaves, filteredHash) => {
         
         traverse(height - 1, pos * 2, leaves, matches);
         
-        if (pos * 2 + 1 < width(height - 1))
+        if (pos * 2 + 1 < width(height - 1)) {
             traverse(height - 1, pos * 2 + 1, leaves, matches);
+        }
     };
         
     while (width(height) > 1) {
@@ -85,21 +88,22 @@ const buildPMT = (leaves, filteredHash) => {
         traverse(height, 0, leaves, matches);
     } else {
         // If there is only one hash, use that hash as the only value without performing any other operation
-        hashes.push(reverseHex(filteredHash));
+        hashes.push(filteredHash);
         bits.push(1);
     }
 
     const flags = Buffer.allocUnsafe((bits.length + 7) / 8 | 0);
     flags.fill(0);
 
-    for (let p = 0; p < bits.length; p++)
+    for (let p = 0; p < bits.length; p++) {
         flags[p / 8 | 0] |= bits[p] << (p % 8);
+    }
 
     return {
         totalTX : leaves.length,
         hashes : hashes,
         flags : parseInt(flags.toString('hex'), 16),
-        hex: `${lpad(leaves.length.toString(16), 2)}${lpad(hashes.length.toString(16), 8)}${hashes.map(reverseHex).join('')}${lpad(flags.length.toString(16), 2)}${flags.toString('hex')}`
+        hex: `${reverseHex(lpad(leaves.length.toString(16), 8))}${lpad(hashes.length.toString(16), 2)}${hashes.map(reverseHex).join('')}${lpad(flags.length.toString(16), 2)}${flags.toString('hex')}`
     };
 };
 
