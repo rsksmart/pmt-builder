@@ -11,4 +11,6 @@ const blockTransactions = [
 
 const resultPmt = pmtBuilder.buildPMT(blockTransactions, blockTransactions[0]);
 
-console.log(resultPmt);
+console.log("Block Transactions: ", blockTransactions);
+console.log("Filtered Hash: ", blockTransactions[0]);
+console.log("Result: ", resultPmt);
