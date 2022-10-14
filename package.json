@@ -1,8 +1,8 @@
 {
-  "name": "pmt-builder",
-  "version": "2.0.0",
-  "description": "PartialMerkleTree builder lib",
-  "main": "pmt-builder.js",
+  "name": "@rsksmart/pmt-builder",
+  "version": "3.0.0",
+  "description": "PartialMerkleTree builder library",
+  "main": "index.js",
   "scripts": {
     "test": "mocha"
   },
@@ -15,10 +15,11 @@
   "bugs": {
     "url": "https://github.com/rsksmart/pmt-builder/issues"
   },
-  "homepage": "https://github.com/rsksmart/pmt-builder#readme",
+  "homepage": "https://www.rsk.co",
   "dependencies": {
     "bitcoinjs-lib": "^3.2.0",
     "chai": "^4.3.4",
     "mocha": "^10.0.0"
-  }
+  },
+  "types": "./index.d.ts"
 }

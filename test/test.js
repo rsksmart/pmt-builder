@@ -1,5 +1,5 @@
 let expect = require('chai').expect;
-let pmtBuilder = require('../pmt-builder');
+let pmtBuilder = require('../index');
 const txs3000 = require('./resources/3000-txs');
 
 describe('PMT Builder', () => {
