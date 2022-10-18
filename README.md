@@ -44,6 +44,13 @@ const blockTransactions = [
 const resultPmt = pmtBuilder.buildPMT(blockTransactions, blockTransactions[0]);
 console.log("Result: ", resultPmt);
 ```
+### Tool Usage
+
+This library can be used via a tool that exists in the tool/pmt-builder.js file via the following command: `node tool/pmt-builder.js network blockHash txHash`, for example: `node tool/pmt-builder.js testnet 00000000000003d91235b675366fc6c26e0ea4b2f125fd292f164247d4e5b07e ac72bd61c72ac8143e5638998f479bdfc5834fce9576fa2054c7be93313abd66`
+
+`network`: testnet or mainnet
+`blockHash`: block hash in hex format
+`txHash`: filtered transaction hash in hex format
 
 ## Test
 
