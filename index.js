@@ -1,3 +1,5 @@
+const fetchBlockTxIds = require("./helper");
+
 let sha256 = require('bitcoinjs-lib').crypto.hash256;
 
 const lpad = (number, length) => number.toString().padStart(length, '0');
@@ -107,4 +109,4 @@ const buildPMT = (leaves, filteredHash) => {
     };
 };
 
-module.exports = { buildPMT };
+module.exports = { buildPMT, fetchBlockTxIds };
