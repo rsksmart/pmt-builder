@@ -1,8 +1,10 @@
-let sha256 = require('bitcoinjs-lib').crypto.hash256;
+const crypto = require('crypto');
 
 const lpad = (number, length) => number.toString().padStart(length, '0');
 
 const reverseHex = (hexString) => Buffer.from(hexString, 'hex').reverse().toString('hex');
+
+const sha256 = (buffer) => crypto.createHash('sha256').update(buffer).digest();
 
 const combineLeftAndRight = (left, right) => {
     let bufLeft = Buffer.from(left, 'hex');
@@ -11,7 +13,7 @@ const combineLeftAndRight = (left, right) => {
     bufRight.reverse();
 
     let bufCombined = Buffer.concat([bufLeft,bufRight]);
-    let bufHashed = sha256(bufCombined);
+    let bufHashed = sha256(sha256(bufCombined));
     bufHashed.reverse();
 
     return bufHashed.toString('hex');
