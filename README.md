@@ -62,4 +62,4 @@ To run test:
 
 > npm test
 
-For any comments or suggestions, feel free to contribute or reach out at our [open slack](https://developers.rsk.co/slack).
+For any comments or suggestions, feel free to contribute or reach out at our [Discord server](https://discord.gg/rootstock).

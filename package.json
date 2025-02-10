@@ -1,6 +1,6 @@
 {
   "name": "@rsksmart/pmt-builder",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "PartialMerkleTree builder library",
   "main": "index.js",
   "scripts": {
