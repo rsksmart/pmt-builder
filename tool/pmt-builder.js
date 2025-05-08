@@ -1,23 +1,33 @@
 const mempoolJS = require("@mempool/mempool.js");
 const pmtBuilder = require("../index");
 
+const getPmtInformation = async (network, txHash) => {
+
+    const { bitcoin: { blocks, transactions } } = mempoolJS({
+        hostname: 'mempool.space',
+        network // 'testnet' | 'mainnet'
+    });
+
+    const transaction = await transactions.getTx({ txid: txHash });
+    const blockHash = transaction.status.block_hash;
+
+    const blockTxids = await blocks.getBlockTxids({ hash: blockHash });
+
+    const resultPmt = pmtBuilder.buildPMT(blockTxids, txHash);
+
+    return resultPmt;
+
+};
+
 (async () => {
     try {
         const network = process.argv[2];
-        const hash = process.argv[3];
-        const txHash = process.argv[4];
+        const txHash = process.argv[3];
 
-        const { bitcoin: { blocks } } = mempoolJS({
-            hostname: 'mempool.space',
-            network: network // 'testnet' | 'mainnet'
-        });
-    
-        const blockTxids = await blocks.getBlockTxids({ hash });
+        const pmtInformation = await getPmtInformation(network, txHash);
 
-        const resultPmt = pmtBuilder.buildPMT(blockTxids, txHash);
-        console.log("Block Transactions Ids:", blockTxids);
-        console.log("Filtered Hash:", txHash);
-        console.log("Result:", resultPmt);
+        console.log('PMT information: ', pmtInformation);
+
     } catch (e) {
         console.log(e);
     }
