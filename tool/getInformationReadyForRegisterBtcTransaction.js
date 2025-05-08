@@ -1,7 +1,7 @@
 const mempoolJS = require("@mempool/mempool.js");
 const pmtBuilder = require("../index");
 
-const getInformationReadyForRegisterBtcTransaction = async (transactionHash, network = 'testnet') => {
+const getInformationReadyForRegisterBtcTransaction = async (transactionHash, network) => {
 
     const { bitcoin: { blocks, transactions } } = mempoolJS({
         hostname: 'mempool.space',
@@ -20,9 +20,6 @@ const getInformationReadyForRegisterBtcTransaction = async (transactionHash, net
     const pmt = resultPmt.hex;
 
     const informationReadyForRegisterBtcTransaction = {
-        network,
-        blockHash,
-        transactionHash,
         tx: `0x${rawBtcTransaction}`,
         height: blockHeight,
         pmt: `0x${pmt}`,
