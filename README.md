@@ -60,7 +60,7 @@ For example: `node tool/pmt-builder.js testnet 00000000000003d91235b675366fc6c26
 
 The Bridge `registerBtcTransaction` method receives 3 parameters: `tx`, the raw btc transaction. `height`, the block height for this transaction. `pmt`, the Partial Merkle Tree of this transaction.
 
-To ease the process of registering a pegin btc transaction, the function `getInformationReadyForRegisterBtcTransaction` gets these values for you, given a bitcoin network name (testnet, mainnet) and a btc transaction, ready to be sent to the Bridge `registerBtcTransaction` without further setup.
+To ease the process of registering a pegin btc transaction, the function `getInformationReadyForRegisterBtcTransaction` gets these values for you, given a bitcoin network name (testnet, mainnet) and a btc transaction hash, ready to be sent to the Bridge `registerBtcTransaction` method without further setup.
 
 This is how to use it:
 
@@ -88,7 +88,7 @@ For testnet: https://explorer.testnet.rootstock.io/address/0x0000000000000000000
 
 For mainnet: https://explorer.rootstock.io/address/0x0000000000000000000000000000000001000006?tab=contract
 
-Simply go to `Write Contract`, then click on `Connect Wallet`, Click on  `registerBtcTransaction` to expand it, paste the data in their corresponding fields, and click on `Write`.
+Simply go to `Write Contract`, then click on `Connect Wallet`, Click on `registerBtcTransaction` to expand it, paste the data in their corresponding fields, and click on `Write`.
 
 Notice that the hex value of these fields (`tx` and `pmt`) have the `0x` prefix, that's because the `registerBtcTransaction` requires them to be like that.
 
