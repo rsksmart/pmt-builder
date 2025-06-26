@@ -94,6 +94,36 @@ Notice that the hex value of these fields (`tx` and `pmt`) have the `0x` prefix,
 
 To check if it has been successfully registered, go to `Read Contract`, then click on `isBtcTxHashAlreadyProcessed` to expand it, paste the btc transaction hash and click on `Read`. If it returns `true`, then it has been registred. You can also use `getBtcTxHashProcessedHeight` to get the block number where it was processed.
 
+### Getting a coinbase transaction information ready to register
+
+The Bridge `registerBtcCoinbaseTransaction` method receives 5 parameters: `btcTxSerialized:`, the coinbase raw btc transaction. `btcBlockHash:`, the block hash for this transaction. `pmtSerialized:`, the Partial Merkle Tree of this transaction. `witnessMerkleRoot:`, the witness merkle root of the coinbase transaction. `witnessReservedValue:`, the witness reserved value of the coinbase transaction.
+
+To ease the process of registering a coinbase transaction, the function `getInformationReadyForRegisterCoinbaseTransaction` gets these values for you, given a bitcoin network name (testnet, mainnet) and a btc transaction hash, ready to be sent to the Bridge `registerBtcCoinbaseTransaction` method without further setup.
+
+This is how to use it:
+
+> node getInformationReadyForRegisterCoinbaseTransaction.js <network> <btcTransactionHash>
+
+For example:
+
+> node tool/getInformationReadyForRegisterCoinbaseTransaction.js mainnet a3e666b1c03153d6eb857f3bca256a9c4515650b2d364507c5c422b56e01da1e
+
+It will return the following:
+
+```json
+ {
+    "btcTxSerialized": "0x01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff640327c50d2cfabe6d6dfb8bde50cdf9fc51da06e181de4eab07007fd48403bad4deee68ac4aa090bbfa10000000f09f909f092f4632506f6f6c2f6400000000000000000000000000000000000000000000000000000000000000000000000500b3c924a0010000000822020000000000001976a914c6740a12d0a7d556f89782bf5faf0e12cf25a63988ac99bc5d13000000001976a91469f2a01f4ff9e6ac24df9062e9828753474b348088ac0000000000000000266a24aa21a9ed38ee89c6e8d8d8fbe507f87f129e0c7ef3ea1f62c39c1dedefe9e1a0815f1cd700000000000000002f6a2d434f524501f6fdbc19a25dc91454cec19ef7714e8b67c4e0e6e7ec323813c943336c579e238228a8ebd096a7e50000000000000000126a10455853415401051b0f0e0e0b1f1200130000000000000000266a2448617468247c5f3da9cb0cc15f3e44e4e8bb3bf5e80003c3e482217093598bfee687c51500000000000000002c6a4c2952534b424c4f434b3a2c9285dd0432125f9b6542a08cd10401d194fbfe3d389151b6758012007584960000000000000000296a2773797355f6a1932b73505d1066f79ebf9b8b8954e4cb327ba1cb90c54c817c94d8936e6c561f007655ef3f",
+    "btcBlockHash": "0x00000000000000000000cdc4fd3ff7bcdd9797aaf644431e0b575049d9b0d9f1",
+    "pmtSerialized": "0x760a00000dcbbd92367c8b4bf2ea8031d7f2eae51868f39b5788112e10e04bbaa2bc33ab01ce649074624ea8f4c942537dc878791b76bc839b1ac9de24cb159444373105cd88ad1761216e10d6779f60728f84e7b93156e09ef9514888d86e46c9f223093982d25540c89229bcb414540a8a47b789202fbd1f37e383c4a0a8d8c83deca5a78e5a13451d1a2b68b13cf37ccd74b9e87e0af90ff7488226f4f4bfe50a9b8420312d7ae96c9e4e7c6070ecbe46567d7f7cfe55e5e9adf11cc973d1c9f495abbe56848dac5ecb360245c2c39a25b27d3d74760c300b383a5da90f99369b6e56ac126c044daf7f96083e5c003062322a6b802e1242a29a86eed2095ff8ed6dad2ceb7fea06b96f03a0666a51d581cf69d2f06c500b60c090f4ee43d7a12b5cc5aba7d469a1f64e9a0a13c0213517e0477578283d0aa4a86bc84f02e3b527813ae217bbd2565d0b2c0510d103306db9b42e00ca31ab6acc0164d0114add57b9237be0ab2cfaf66cb001c5ceb5acce2f19dbdf7798240c1461c14952903f73aa3d80be1e6b336893895b34f7e610aeca58eab520de872035e1d5059332c57ad720e904ff1f0000",
+    "witnessMerkleRoot": "0xf4aa088295b55991a396a3caaa9da6fde85a0d34e009e73bbe2a508f2ffce763",
+    "witnessReservedValue": "0x0000000000000000000000000000000000000000000000000000000000000000"
+}
+```
+
+Then you can copy the `btcTxSerialized`, `btcBlockHash`, `pmtSerialized`, `witnessMerkleRoot` and `witnessReservedValue` as parameters to the Bridge `registerBtcCoinbaseTransaction` method.
+
+You can use the Rootstock explorer to register the coinbase transaction following the same steps above.
+
 ## Test
 
 To run test:
