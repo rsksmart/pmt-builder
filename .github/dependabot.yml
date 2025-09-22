@@ -11,15 +11,13 @@ updates:
           - "*"
         update-types:
           - "minor"
+          - "patch"
 
   - package-ecosystem: npm
     directory: "/"
     schedule:
       interval: "weekly"
     versioning-strategy: increase
-    ignore:
-      - dependency-name: "*"
-        update-types: ["version-update:semver-patch"]
     groups:
       npm-minor:
         applies-to: version-updates
@@ -27,3 +25,4 @@ updates:
           - "*"
         update-types:
           - "minor"
+          - "patch"
