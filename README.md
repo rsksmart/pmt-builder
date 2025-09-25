@@ -1,4 +1,4 @@
-![Github CI/CD](https://github.com/rsksmart/pmt-builder/actions/workflows/workflow.yml/badge.svg)
+![Github CI/CD](https://github.com/rsksmart/pmt-builder/actions/workflows/build-test.yml/badge.svg)
 [![CodeQL](https://github.com/rsksmart/pmt-builder/workflows/CodeQL/badge.svg)](https://github.com/rsksmart/pmt-builder/actions?query=workflow%3ACodeQL)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/rsksmart/pmt-builder/badge)](https://scorecard.dev/viewer/?uri=github.com/rsksmart/pmt-builder)
 
