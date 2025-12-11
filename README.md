@@ -66,7 +66,7 @@ To ease the process of registering a pegin btc transaction, the function `getInf
 
 This is how to use it:
 
-> node getInformationReadyForRegisterBtcTransaction.js <network> <btcTransactionHash>
+> node tool/getInformationReadyForRegisterBtcTransaction.js <network> <btcTransactionHash>
 
 For example:
 
@@ -104,11 +104,11 @@ To ease the process of registering a coinbase transaction, the function `getInfo
 
 This is how to use it:
 
-> node getInformationReadyForRegisterCoinbaseTransaction.js <network> <btcTransactionHash>
+> node tool/getInformationReadyForRegisterCoinbaseBtcTransaction.js<network> <btcCoinbaseTransactionHash>
 
 For example:
 
-> node tool/getInformationReadyForRegisterCoinbaseTransaction.js mainnet a3e666b1c03153d6eb857f3bca256a9c4515650b2d364507c5c422b56e01da1e
+> node tool/getInformationReadyForRegisterCoinbaseBtcTransaction.js mainnet a3e666b1c03153d6eb857f3bca256a9c4515650b2d364507c5c422b56e01da1e
 
 It will return the following:
 
