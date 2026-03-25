@@ -1,19 +1,48 @@
+const path = require("path");
+require("dotenv").config({
+    path: path.join(__dirname, "..", ".env"),
+    quiet: true,
+});
+
 const pmtBuilder = require("../index");
-const bitcoin = require('bitcoinjs-lib');
+const bitcoin = require("bitcoinjs-lib");
 const { createMempoolBitcoinClients } = require("./mempool-api-client");
-const { fetchBlockWtxidsWithTargetWtxid, getTransactionWithRetry, getBlockInfoByTransactionHash } = require("./pmt-builder-utils");
+const { fetchBlockWtxidsWithTargetWtxid } = require("./pmt-builder-utils");
+const { getBitcoinTransactionDataForPmt } = require("./lib/bitcoinTransactionDataForPmt");
+const { bitcoindRpc } = require("./lib/bitcoindRpc");
+
+const MEMPOOL_NETWORKS = new Set(["mainnet", "testnet"]);
 
 const getInformationReadyForRegisterBtcTransaction = async (network, txHash) => {
-    const { blocks, transactions } = createMempoolBitcoinClients(network);
+    const {
+        rawHex: rawTargetBtcTransaction,
+        blockHeight,
+        blockTxids,
+    } = await getBitcoinTransactionDataForPmt(txHash, network);
 
-    const { blockHeight, blockTxids } = await getBlockInfoByTransactionHash(blocks, transactions, txHash);
-    const rawTargetBtcTransaction = await getTransactionWithRetry(transactions, txHash);
     const targetTx = bitcoin.Transaction.fromHex(rawTargetBtcTransaction);
     const hasWitness = targetTx.hasWitnesses();
 
     let resultPmt;
     if (hasWitness) {
-        const { blockWtxids, targetWtxid } = await fetchBlockWtxidsWithTargetWtxid(transactions, blockTxids, txHash);
+        let transactionsClient;
+        if (MEMPOOL_NETWORKS.has(network)) {
+            const { transactions } = createMempoolBitcoinClients(network);
+            transactionsClient = transactions;
+        } else if (network === "regtest") {
+            transactionsClient = {
+                getTxHex: ({ txid }) => bitcoindRpc("getrawtransaction", [txid, false]),
+            };
+        } else {
+            throw new Error(
+                `Witness transactions are not supported for network "${network}".`,
+            );
+        }
+        const { blockWtxids, targetWtxid } = await fetchBlockWtxidsWithTargetWtxid(
+            transactionsClient,
+            blockTxids,
+            txHash,
+        );
         resultPmt = pmtBuilder.buildPMT(blockWtxids, targetWtxid);
     } else {
         resultPmt = pmtBuilder.buildPMT(blockTxids, txHash);
@@ -33,10 +62,13 @@ const getInformationReadyForRegisterBtcTransaction = async (network, txHash) => 
         const network = process.argv[2];
         const txHash = process.argv[3];
 
-        const informationReadyForRegisterBtcTransaction = await getInformationReadyForRegisterBtcTransaction(network, txHash);
+        const informationReadyForRegisterBtcTransaction =
+            await getInformationReadyForRegisterBtcTransaction(network, txHash);
 
-        console.log('Transaction Information ready for registerBtcTransaction: ', informationReadyForRegisterBtcTransaction);
-
+        console.log(
+            "Transaction Information ready for registerBtcTransaction: ",
+            informationReadyForRegisterBtcTransaction,
+        );
     } catch (e) {
         console.log(e);
     }
