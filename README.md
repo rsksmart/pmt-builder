@@ -62,15 +62,31 @@ For example: `node tool/pmt-builder.js testnet 00000000000003d91235b675366fc6c26
 
 The Bridge `registerBtcTransaction` method receives 3 parameters: `tx`, the raw btc transaction. `height`, the block height for this transaction. `pmt`, the Partial Merkle Tree of this transaction.
 
-To ease the process of registering a pegin btc transaction, the function `getInformationReadyForRegisterBtcTransaction` gets these values for you, given a bitcoin network name (testnet, mainnet) and a btc transaction hash, ready to be sent to the Bridge `registerBtcTransaction` method without further setup.
+To ease the process of registering a pegin btc transaction, the function `getInformationReadyForRegisterBtcTransaction` gets these values for you, given a bitcoin network name (`mainnet`, `testnet`, or `regtest`) and a btc transaction hash, ready to be sent to the Bridge `registerBtcTransaction` method without further setup.
+
+For **mainnet** and **testnet**, transaction and block data are fetched from [mempool.space](https://mempool.space) via mempool.js (no extra configuration).
+
+For **regtest**, data is read from a local [Bitcoin Core](https://bitcoincore.org/) node over JSON-RPC. The tool uses `BITCOIND_RPC_URL` (and optional `BITCOIND_RPC_USER` / `BITCOIND_RPC_PASSWORD`) so you can point at your node’s host, port, and credentials—whether that is regtest on a non-default port or another setup that still speaks Bitcoin Core JSON-RPC.
+
+If you will use regtest or a non-default RPC endpoint, set `BITCOIND_RPC_URL` and, if needed, `BITCOIND_RPC_USER` and `BITCOIND_RPC_PASSWORD`. See `.env.example` for descriptions.
+
+**Option A — `.env` file:** Copy `.env.example` to `.env` in the project root, edit the values, then run the `node` command below. The script loads `.env` with [dotenv](https://github.com/motdotla/dotenv) (no need to `source` or export manually). `.env` is gitignored so credentials stay local.
+
+**Option B — inline (one-off):** Set variables on the same line as `node`, for example:
+
+`BITCOIND_RPC_URL=http://127.0.0.1:18443 BITCOIND_RPC_USER=test BITCOIND_RPC_PASSWORD=test node tool/getInformationReadyForRegisterBtcTransaction.js regtest <btcTransactionHash>`
+
+Inline variables override anything set in `.env` for that process.
+
+The confirming transaction must be visible to `getrawtransaction` (typically enable `txindex=1` in `bitcoin.conf` for arbitrary confirmed txs).
 
 This is how to use it:
 
-> node tool/getInformationReadyForRegisterBtcTransaction.js <network> <btcTransactionHash>
+`node tool/getInformationReadyForRegisterBtcTransaction.js <network> <btcTransactionHash>`
 
-For example:
+For example (testnet):
 
-> node tool/getInformationReadyForRegisterBtcTransaction.js testnet ef659287588630175492aa4edb503bccc68cd1f6ddb0a4592221207da00bfe85
+`node tool/getInformationReadyForRegisterBtcTransaction.js testnet ef659287588630175492aa4edb503bccc68cd1f6ddb0a4592221207da00bfe85`
 
 It will return the following:
 

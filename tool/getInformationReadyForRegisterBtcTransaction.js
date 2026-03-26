@@ -1,26 +1,25 @@
-const mempoolJS = require("@mempool/mempool.js");
+const path = require("path");
+require("dotenv").config({
+    path: path.join(__dirname, "..", ".env"),
+    quiet: true,
+});
+
 const pmtBuilder = require("../index");
+const { getBitcoinTransactionDataForPmt } = require("./lib/bitcoinTransactionDataForPmt");
 
 const getInformationReadyForRegisterBtcTransaction = async (transactionHash, network) => {
 
-    const { bitcoin: { blocks, transactions } } = mempoolJS({
-        hostname: 'mempool.space',
-        network // 'testnet' | 'mainnet'
-    });
-
-    const transaction = await transactions.getTx({ txid: transactionHash });
-    const blockHash = transaction.status.block_hash;
-    const blockHeight = transaction.status.block_height;
-
-    const blockTxids = await blocks.getBlockTxids({ hash: blockHash });
-    const rawBtcTransaction = await transactions.getTxHex({ txid: transactionHash });
+    const { rawHex, blockHeight, blockTxids } = await getBitcoinTransactionDataForPmt(
+        transactionHash,
+        network
+    );
 
     const resultPmt = pmtBuilder.buildPMT(blockTxids, transactionHash);
 
     const pmt = resultPmt.hex;
 
     const informationReadyForRegisterBtcTransaction = {
-        tx: `0x${rawBtcTransaction}`,
+        tx: `0x${rawHex}`,
         height: blockHeight,
         pmt: `0x${pmt}`,
     };
@@ -43,4 +42,3 @@ const getInformationReadyForRegisterBtcTransaction = async (transactionHash, net
         console.log(e);
     }
 })();
-
