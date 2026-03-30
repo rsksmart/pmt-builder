@@ -1,5 +1,5 @@
 const mempoolJS = require("@mempool/mempool.js");
-const pmtBuilder = require("../index");
+const { buildPMT, getWtxid } = require("../index");
 
 const getInformationReadyForRegisterBtcTransaction = async (transactionHash, network) => {
 
@@ -15,18 +15,29 @@ const getInformationReadyForRegisterBtcTransaction = async (transactionHash, net
     const blockTxids = await blocks.getBlockTxids({ hash: blockHash });
     const rawBtcTransaction = await transactions.getTxHex({ txid: transactionHash });
 
-    const resultPmt = pmtBuilder.buildPMT(blockTxids, transactionHash);
+    const blockTxWids = [];
 
+    for (const txid of blockTxids) {
+        const rawTx = await transactions.getTxHex({ txid });
+        const wTxId = await getWtxid(rawTx);
+        blockTxWids.push(wTxId);
+    }
+
+    const resultPmt = buildPMT(blockTxids, transactionHash);
     const pmt = resultPmt.hex;
+
+    const targetTxWTxId = await getWtxid(rawBtcTransaction);
+    const resultPmtConsideringWitness = buildPMT(blockTxWids, targetTxWTxId);
+    const pmtConsideringWitness = resultPmtConsideringWitness.hex;
 
     const informationReadyForRegisterBtcTransaction = {
         tx: `0x${rawBtcTransaction}`,
         height: blockHeight,
         pmt: `0x${pmt}`,
+        pmtConsideringWitness: `0x${pmtConsideringWitness}`,
     };
 
     return informationReadyForRegisterBtcTransaction;
-
 };
 
 (async () => {
@@ -44,3 +55,4 @@ const getInformationReadyForRegisterBtcTransaction = async (transactionHash, net
     }
 })();
 
+module.exports = { getInformationReadyForRegisterBtcTransaction };

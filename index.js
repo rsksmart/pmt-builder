@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const bitcoin = require('bitcoinjs-lib');
 
 const lpad = (number, length) => number.toString().padStart(length, '0');
 
@@ -18,6 +19,12 @@ const combineLeftAndRight = (left, right) => {
 
     return bufHashed.toString('hex');
 };
+
+const getWtxid = async (rawTx) => {
+    const tx = bitcoin.Transaction.fromHex(rawTx);
+    const wtxid = tx.getHash(true).reverse().toString('hex');
+    return wtxid;
+}
 
 const buildPMT = (leaves, filteredHash) => {
     const matches = [];
@@ -109,4 +116,4 @@ const buildPMT = (leaves, filteredHash) => {
     };
 };
 
-module.exports = { buildPMT };
+module.exports = { buildPMT, getWtxid };

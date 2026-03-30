@@ -4,3 +4,9 @@
   * @param filteredHash: transaction hash
   */
 export function buildPMT(leaves: string[], filteredHash: string): { totalTX: number, hashes: string[], flags: number, hex: string }
+
+/**
+  *
+  * @param txid: transaction id
+  */
+export function getWtxid(txid: string): Promise<string>;
