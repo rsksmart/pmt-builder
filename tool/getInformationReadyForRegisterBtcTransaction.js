@@ -1,5 +1,6 @@
 const mempoolJS = require("@mempool/mempool.js");
-const { buildPMT, getWtxid } = require("../index");
+const pmtBuilder = require("../index");
+const { getWtxid } = require("./pmt-builder-utils");
 
 const getInformationReadyForRegisterBtcTransaction = async (transactionHash, network) => {
 
@@ -23,11 +24,11 @@ const getInformationReadyForRegisterBtcTransaction = async (transactionHash, net
         blockTxWids.push(wTxId);
     }
 
-    const resultPmt = buildPMT(blockTxids, transactionHash);
+    const resultPmt = pmtBuilder.buildPMT(blockTxids, transactionHash);
     const pmt = resultPmt.hex;
 
     const targetTxWTxId = await getWtxid(rawBtcTransaction);
-    const resultPmtConsideringWitness = buildPMT(blockTxWids, targetTxWTxId);
+    const resultPmtConsideringWitness = pmtBuilder.buildPMT(blockTxWids, targetTxWTxId);
     const pmtConsideringWitness = resultPmtConsideringWitness.hex;
 
     const informationReadyForRegisterBtcTransaction = {
