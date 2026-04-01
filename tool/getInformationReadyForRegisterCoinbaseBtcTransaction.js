@@ -46,7 +46,6 @@ const getAllTxs = async (transactionsClient, txIds) => {
         // Update progress before each request
         updateProgress(i + 1, totalTxs);
 
-        // mempool.js getTx method returns an object that directly contains 'wtxid'
         const tx = await getTransactionWithRetry(transactionsClient, txId);
 
         if (tx) {
