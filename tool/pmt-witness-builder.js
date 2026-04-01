@@ -29,8 +29,8 @@ const getPmtInformationWithWitness = async (network, txHash) => {
     }
 
     const rawTx = await getTransactionWithRetry(transactionsClient, txHash);
-    const targetTxWTxId = getWtxid(rawTx);
-    const resultPmt = pmtBuilder.buildPMT(blockWtxids, targetTxWTxId);
+    const targetWtxid = getWtxid(rawTx);
+    const resultPmt = pmtBuilder.buildPMT(blockWtxids, targetWtxid);
 
     return resultPmt;
 };
