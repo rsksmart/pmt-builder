@@ -8,7 +8,7 @@ const getWtxid = (rawTx) => {
     const tx = bitcoin.Transaction.fromHex(rawTx);
     const wtxid = tx.getHash(true).reverse().toString('hex');
     return wtxid;
-}
+};
 
 /**
  * Sleeps for a given number of milliseconds.
@@ -17,7 +17,7 @@ const getWtxid = (rawTx) => {
  */
 function sleep(ms = REQUEST_DELAY_MS) {
     return new Promise(resolve => setTimeout(resolve, ms));
-}
+};
 
 /**
  * Fetches transaction details with retry logic in case of rate limiting errors.
@@ -27,6 +27,7 @@ function sleep(ms = REQUEST_DELAY_MS) {
  * (e.g., HTTP 429 status or related error messages), it retries the request with
  * exponential backoff until the maximum retry attempts are exhausted.
  *
+ * @param {Object} transactionsClient - Client instance used to fetch transaction data (must provide `getTxHex`).
  * @param {string} txId - The transaction ID for which details need to be fetched.
  * @param {number} [retries=0] - The current retry attempt count. Defaults to 0.
  * @returns {Promise<Object|null>} - A promise that resolves to the transaction details if
