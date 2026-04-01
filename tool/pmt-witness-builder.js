@@ -20,6 +20,11 @@ const getPmtInformationWithWitness = async (network, txHash) => {
     for (let i = 0; i < blockTxIds.length; i++) {
         const txid = blockTxIds[i];
         const rawTx = await getTransactionWithRetry(transactionsClient, txid);
+
+        if (!rawTx) {
+            throw new Error(`Failed to fetch transaction details for txId: ${txid}. It might not exist or is malformed.`);
+        }
+
         const wtxid = getWtxid(rawTx);
         blockWtxids.push(wtxid);
 
@@ -29,6 +34,11 @@ const getPmtInformationWithWitness = async (network, txHash) => {
     }
 
     const rawTx = await getTransactionWithRetry(transactionsClient, txHash);
+
+    if (!rawTx) {
+        throw new Error(`Failed to fetch transaction details for txId: ${txHash}. It might not exist or is malformed.`);
+    }
+
     const targetWtxid = getWtxid(rawTx);
     const resultPmt = pmtBuilder.buildPMT(blockWtxids, targetWtxid);
 

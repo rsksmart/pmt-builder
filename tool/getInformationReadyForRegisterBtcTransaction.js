@@ -19,6 +19,11 @@ const getInformationReadyForRegisterBtcTransaction = async (transactionHash, net
     for (let i = 0; i < blockTxids.length; i++) {
         const txid = blockTxids[i];
         const rawTx = await getTransactionWithRetry(transactionsClient, txid);
+
+        if (!rawTx) {
+            throw new Error(`Failed to fetch transaction details for txId: ${txid}. It might not exist or is malformed.`);
+        }
+
         const wtxid = getWtxid(rawTx);
         blockWtxids.push(wtxid);
 
@@ -31,7 +36,13 @@ const getInformationReadyForRegisterBtcTransaction = async (transactionHash, net
     const pmt = resultPmt.hex;
     const blockHeight = transaction.status.block_height;
     const rawTargetBtcTransaction = await getTransactionWithRetry(transactionsClient, transactionHash);
+
+    if (!rawTargetBtcTransaction) {
+        throw new Error(`Failed to fetch transaction details for txId: ${transactionHash}. It might not exist or is malformed.`);
+    }
+
     const targetWtxid = getWtxid(rawTargetBtcTransaction);
+
     const resultPmtConsideringWitness = pmtBuilder.buildPMT(blockWtxids, targetWtxid);
     const pmtConsideringWitness = resultPmtConsideringWitness.hex;
 
