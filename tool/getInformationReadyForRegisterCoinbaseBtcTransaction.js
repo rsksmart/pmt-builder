@@ -24,6 +24,7 @@ function clearProgress() {
 
 /**
  * Retrieves all transaction objects in a block by their transaction IDs.
+ * @param {Object} transactionsClient - Client instance used to fetch transaction data (must provide `getTxHex`).
  * @param {string[]} txIds - An array of txIds.
  * @returns {Promise<string[]>} An array of transactions.
  */
