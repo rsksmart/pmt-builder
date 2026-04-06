@@ -3,6 +3,7 @@ const bitcoin = require('bitcoinjs-lib');
 const MAX_RETRIES = 5;       // Max retries for a failed request
 const RETRY_DELAY_FACTOR_MS = 1000; // Base delay for retries (1000ms = 1 second)
 const REQUEST_DELAY_MS = 200; // Delay between individual TX detail requests (200ms = 0.2 seconds)
+const TOO_MANY_REQUESTS_ERROR_CODE = 429; // HTTP status code for Too Many Requests
 
 /**
  * Calculates the wtxid for a given transaction ID by fetching the raw transaction data and computing the hash.
@@ -79,7 +80,7 @@ const getTransactionWithRetry = async (transactionsClient, txId, retries = 0) =>
         return await transactionsClient.getTxHex({txid: txId});
     } catch (error) {
         // mempool.js might wrap the error, so we check for common indicators of 429
-        const isRateLimitError = error.response && error.response.status === 429;
+        const isRateLimitError = error.response && error.response.status === TOO_MANY_REQUESTS_ERROR_CODE;
 
         // Sometimes the error message might contain clues if status is not directly 429
         const isMempoolSpecificRateLimit = error.message && error.message.includes('Too Many Requests');
