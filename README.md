@@ -20,7 +20,7 @@ This library can be used to build a partial merkle tree for a block of transacti
 
 To build the tree, simply call the `buildPMT` function and pass the `leaves` as a list of strings and a `filteredHash` in string format, i.e buildPMT(leaves: string[], filteredHash: string)
 
-First parameter {leaves}: An array of transaction hash of all transactions without witness(txid) in a block. 
+First parameter {leaves}: An array of transaction hashes of all transactions without witness(txid) in a block.
 Second parameter {filteredHash}: transaction hash (the hash without witness).
 
 The function returns an object with the following fields:
@@ -50,12 +50,11 @@ console.log("Result: ", resultPmt);
 
 This library can be used via a tool(this tool uses mempool.js api to get transactions) that exists in the tool/pmt-builder.js file via the following command: 
 
-`node tool/pmt-builder.js network blockHash txHash`, 
+`node tool/pmt-builder.js network txHash`,
 
-For example: `node tool/pmt-builder.js testnet 00000000000003d91235b675366fc6c26e0ea4b2f125fd292f164247d4e5b07e ac72bd61c72ac8143e5638998f479bdfc5834fce9576fa2054c7be93313abd66`
+For example: `node tool/pmt-builder.js testnet ac72bd61c72ac8143e5638998f479bdfc5834fce9576fa2054c7be93313abd66`
 
 `network`: testnet or mainnet
-`blockHash`: block hash in hex format
 `txHash`: filtered transaction hash in hex format
 
 ### Getting a pegin btc transaction information ready to register
@@ -94,7 +93,7 @@ Simply go to `Write Contract`, then click on `Connect Wallet`, Click on `registe
 
 Notice that the hex value of these fields (`tx` and `pmt`) have the `0x` prefix, that's because the `registerBtcTransaction` requires them to be like that.
 
-To check if it has been successfully registered, go to `Read Contract`, then click on `isBtcTxHashAlreadyProcessed` to expand it, paste the btc transaction hash and click on `Read`. If it returns `true`, then it has been registred. You can also use `getBtcTxHashProcessedHeight` to get the block number where it was processed.
+To check if it has been successfully registered, go to `Read Contract`, then click on `isBtcTxHashAlreadyProcessed` to expand it, paste the btc transaction hash and click on `Read`. If it returns `true`, then it has been registered. You can also use `getBtcTxHashProcessedHeight` to get the block number where it was processed.
 
 ### Getting a coinbase transaction information ready to register
 
@@ -104,7 +103,7 @@ To ease the process of registering a coinbase transaction, the function `getInfo
 
 This is how to use it:
 
-> node tool/getInformationReadyForRegisterCoinbaseBtcTransaction.js<network> <btcCoinbaseTransactionHash>
+> node tool/getInformationReadyForRegisterCoinbaseBtcTransaction.js <network> <btcCoinbaseTransactionHash>
 
 For example:
 
