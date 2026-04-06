@@ -1,7 +1,7 @@
 const expect = require('chai').expect;
 const pmtBuilder = require('../index');
 const txs3000 = require('./resources/3000-txs');
-const { getWtxid } = require('../tool/pmt-builder-utils');
+const { getWtxids } = require('../tool/pmt-builder-utils');
 
 describe('PMT Builder', () => {
     it('should create a valid PMT, block with a single transaction', () => {
@@ -111,11 +111,53 @@ describe('PMT Builder', () => {
     });
 });
 
-describe('getWtxid', () => {
-    it('should return the correct wtxid for a given raw transaction', async () => {
-        const expectedWtxid = "b17de7391562cf25c50a37a6e48a3ff232fcacdea734fd5160bb44292bb620e6";
-        const rawTx = "02000000000101be2994b2fd4d7e8b48652b9618b0f6a62321121b15fe6b5612cdb314d9c770000200000023220020f8e08a83ad7e3ce13df880cdea97aba6d145b6244ead9f8512b159ebea15be55ffffffff0278990700000000001976a9142aa073f0e7bfcbab463670364ef08fa469337f1088ac604ff3020000000017a9147214a88d8e15f5a09050bff1d1a85f19d6e3b8208705004830450221008fc13ebe097363f278ab1d20adaccc92350de298141433c69de782692ac3794d02201ec64821f5ceeaa7ea8b792284f92a4a4ee324216853dfa99c28195425fe53c3014830450221008432682c262647f7c6cf0d39c1b416d48d4876d87337445bbc094a9d9fc27c110220525a6ef39a1295cf18e96cfe9b3211fc965d55068698971bc196acf3eae162cf0100db6452210379d78dcae0be90715a088413c588da6a9381aae42e504f6e05c7b5204ed5bf3a2103d9d48cdc0fdf039d08371c64b1e86e1715e9898d4680595f1d4e3398dbdd9e9e2103df89bd3d49c1ebdef2e9b4e77c84e048dbbcf7c41735b073a68fdcf5d086bd2853ae670350cd00b27552210216c23b2ea8e4f11c3f9e22711addb1d16a93964796913830856b568cc3ea21d3210275562901dd8faae20de0a4166362a4f82188db77dbed4ca887422ea1ec185f1421034db69f2112f4fb1bb6141bf6e2bd6631f0484d0bd95b16767902c9fe219d4a6f53ae6800000000";
-        const wTxId = getWtxid(rawTx);
-        expect(wTxId).to.be.eq(expectedWtxid);
+describe('getWtxids', () => {
+    const transactions = {
+        // https://mempool.space/testnet/tx/2bf2c26cf756564f1d7f17f89882da32f20d694d9f2c8f04962c1116ccdf0bcf
+        '2bf2c26cf756564f1d7f17f89882da32f20d694d9f2c8f04962c1116ccdf0bcf': {
+            rawTx: '02000000039a6075be99f85280c302d61054923f1b7f8a00718f3b7469bcf8e2a1cfebed06000000006b483045022100d087ca67b092c59ac07e81717c2ca62ff2952c4b42762168136b1bee326d6b9e022002c3b07f08a4ed5805b1185bd022e840d89fa952c583c6a5a76f998e0e962dfc012102e0b5d0549e132e3fdae7b6d11ad5ea15eb3e452681dd148867d85f7f83bc61cbfdffffffe68340cfb309aaacdb8bbe279b87e568c97416b42a8c57b72fb0fe125cf53d11000000006b48304502210097012cb79a48d914e10c9640e41d27b6db65dcedece5312ada04fc000b2e63bf022018e46e94271821006a2d2609b81ba44e0c1f91456e6b07438db23cc263451a00012102e0b5d0549e132e3fdae7b6d11ad5ea15eb3e452681dd148867d85f7f83bc61cbfdffffff460e61cdee3e4db4ab5c38c9d7254c77f93760b4c9ba43c64b136905726eece0000000006b4830450221008b893aea2f2222ea8bbc25ef65fee8a68c78d3833aeb9f8bf107800ac5152ddc022001259c70925c240da7dc50bdbc6f0a0b762d6db43458fee7deed9a61511a358d012102e0b5d0549e132e3fdae7b6d11ad5ea15eb3e452681dd148867d85f7f83bc61cbfdffffff0212520200000000001976a914bafc55fad94b8aa8ff1b94c28ecc0a47c46c7b1688ac90ab1e000000000017a9141eb5d0b64f652150d42cb0ccbc08ec710cc35218875fb44a00',
+            wtxid: '2bf2c26cf756564f1d7f17f89882da32f20d694d9f2c8f04962c1116ccdf0bcf',
+        },
+        // https://mempool.space/testnet/tx/d53d1f237239aebbd2cb16f9c1f85e42cde93e02b1fb2d247114a0db2e0e30d0
+        'd53d1f237239aebbd2cb16f9c1f85e42cde93e02b1fb2d247114a0db2e0e30d0': {
+            rawTx: '02000000000101fc11ed2e485faf6370461ec09b61e1d65d3e4f40dba26a6926356ec859436fac0100000023220020f8e08a83ad7e3ce13df880cdea97aba6d145b6244ead9f8512b159ebea15be55ffffffff02e8a31e00000000001976a914cab5925c59a9a413f8d443000abcc5640bdf067588acc00130030000000017a9147214a88d8e15f5a09050bff1d1a85f19d6e3b820870500473044022042a5bb9a1eb34b56a16602a4b29e6f594d82cf68a7758e05ccb2556396574b9802202900553564e44ca4e4718cae91767db380d20f2e6d0dd7fbcd9599eee5713d5101473044022043d7fe49578ff16e8abfda7951bad1aeb9c0a93d5157367ea03e09101c0d3770022061270ce8edfa9dae3e5e135d8673dd16f6c646c480cca42a11fe83f2960833710100db6452210379d78dcae0be90715a088413c588da6a9381aae42e504f6e05c7b5204ed5bf3a2103d9d48cdc0fdf039d08371c64b1e86e1715e9898d4680595f1d4e3398dbdd9e9e2103df89bd3d49c1ebdef2e9b4e77c84e048dbbcf7c41735b073a68fdcf5d086bd2853ae670350cd00b27552210216c23b2ea8e4f11c3f9e22711addb1d16a93964796913830856b568cc3ea21d3210275562901dd8faae20de0a4166362a4f82188db77dbed4ca887422ea1ec185f1421034db69f2112f4fb1bb6141bf6e2bd6631f0484d0bd95b16767902c9fe219d4a6f53ae6800000000',
+            wtxid: '84606c5f6c896f75a4b5d38c756a33cf7c2cd5fa308fe93d708a3b04d281f34b',
+        },
+    };
+
+    const createTransactionsClientMock = () => {
+        const requestedTxids = [];
+
+        return {
+            requestedTxids,
+            getTxHex: async ({ txid }) => {
+                requestedTxids.push(txid);
+                return transactions[txid].rawTx;
+            },
+        };
+    };
+
+    it('should return the txid as the wtxid for a block without witness transactions', async () => {
+        const blockTxids = ['2bf2c26cf756564f1d7f17f89882da32f20d694d9f2c8f04962c1116ccdf0bcf'];
+        const targetTxId = blockTxids[0];
+        const transactionsClient = createTransactionsClientMock();
+
+        const result = await getWtxids(transactionsClient, blockTxids, targetTxId);
+
+        expect(result.targetWtxid).to.equal(transactions[targetTxId].wtxid);
+        expect(result.blockWtxids.length).to.equal(1);
+        expect(result.blockWtxids).to.be.an('array').that.includes(transactions[targetTxId].wtxid);
+    });
+
+    it('should return the witness hash for a block with witness transactions', async () => {
+        const blockTxids = ['d53d1f237239aebbd2cb16f9c1f85e42cde93e02b1fb2d247114a0db2e0e30d0'];
+        const targetTxId = blockTxids[0];
+        const transactionsClient = createTransactionsClientMock();
+
+        const result = await getWtxids(transactionsClient, blockTxids, targetTxId);
+
+        expect(result.targetWtxid).to.equal(transactions[targetTxId].wtxid);
+        expect(result.blockWtxids.length).to.equal(1);
+        expect(result.blockWtxids).to.be.an('array').that.includes(transactions[targetTxId].wtxid);
     });
 });

@@ -1,6 +1,6 @@
 const mempoolJS = require("@mempool/mempool.js");
 const pmtBuilder = require("../index");
-const { getWtxid, sleep, getTransactionWithRetry } = require("./pmt-builder-utils");
+const { getWtxids } = require("./pmt-builder-utils");
 
 const getPmtInformationWithWitness = async (network, txHash) => {
     const bitcoin = mempoolJS({
@@ -16,32 +16,8 @@ const getPmtInformationWithWitness = async (network, txHash) => {
     const blockHash = transaction.status.block_hash;
     const blockTxIds = await blocksClient.getBlockTxids({ hash: blockHash });
     
-    const blockWtxids = [];
-    for (let i = 0; i < blockTxIds.length; i++) {
-        const txid = blockTxIds[i];
-        const rawTx = await getTransactionWithRetry(transactionsClient, txid);
-
-        if (!rawTx) {
-            throw new Error(`Failed to fetch transaction details for txId: ${txid}. It might not exist or is malformed.`);
-        }
-
-        const wtxid = getWtxid(rawTx);
-        blockWtxids.push(wtxid);
-
-        if (i < blockTxIds.length - 1) {
-            await sleep();
-        }
-    }
-
-    const rawTx = await getTransactionWithRetry(transactionsClient, txHash);
-
-    if (!rawTx) {
-        throw new Error(`Failed to fetch transaction details for txId: ${txHash}. It might not exist or is malformed.`);
-    }
-
-    const targetWtxid = getWtxid(rawTx);
+    const { blockWtxids, targetWtxid } = await getWtxids(transactionsClient, blockTxIds, txHash);
     const resultPmt = pmtBuilder.buildPMT(blockWtxids, targetWtxid);
-
     return resultPmt;
 };
 

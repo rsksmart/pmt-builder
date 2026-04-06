@@ -4,7 +4,47 @@ const MAX_RETRIES = 5;       // Max retries for a failed request
 const RETRY_DELAY_FACTOR_MS = 1000; // Base delay for retries (1000ms = 1 second)
 const REQUEST_DELAY_MS = 200; // Delay between individual TX detail requests (200ms = 0.2 seconds)
 
-const getWtxid = (rawTx) => {
+/**
+ * Calculates the wtxid for a given transaction ID by fetching the raw transaction data and computing the hash.
+ * @param {Object} transactionsClient - Client instance used to fetch transaction data (must provide `getTxHex`).
+ * @param {string[]} blockTxids - Array of transaction IDs in the block.
+ * @param {string} targetTxId - The transaction ID for which the wtxid is specifically needed.
+ * @returns {Promise<{blockWtxids: string[], targetWtxid: string}>} - An object containing all wtxids and the target wtxid.
+ * @throws {Error} - If the transaction details cannot be fetched or if the transaction is malformed.
+ */
+const getWtxids = async (transactionsClient, blockTxids, targetTxId) => {
+    const blockWtxids = [];
+    let targetWtxid;
+    for (let i = 0; i < blockTxids.length; i++) {
+        const txid = blockTxids[i];
+        const wtxid = await getWtxid(transactionsClient, txid);
+
+        if (txid === targetTxId) {
+            targetWtxid = wtxid;
+        }
+
+        blockWtxids.push(wtxid);
+        if (i < blockTxids.length - 1) {
+            await sleep();
+        }
+    }
+    return { blockWtxids, targetWtxid };
+};
+
+/**
+ * Calculates the wtxid for a given transaction ID by fetching the raw transaction data and computing the hash.
+ * @param {Object} transactionsClient - Client instance used to fetch transaction data (must provide `getTxHex`).
+ * @param {string} txId - The transaction ID for which details need to be fetched.
+ * @returns {Promise<string>} - The wtxid of the transaction.
+ * @throws {Error} - If the transaction details cannot be fetched or if the transaction is malformed.
+ */
+const getWtxid = async (transactionsClient, txid) => {
+    const rawTx = await getTransactionWithRetry(transactionsClient, txid);
+
+    if (!rawTx) {
+        throw new Error(`Failed to fetch transaction details for txId: ${txid}. It might not exist or is malformed.`);
+    }
+
     const tx = bitcoin.Transaction.fromHex(rawTx);
     const wtxid = tx.getHash(true).reverse().toString('hex');
     return wtxid;
@@ -56,4 +96,4 @@ const getTransactionWithRetry = async (transactionsClient, txId, retries = 0) =>
     }
 };
 
-module.exports = { getWtxid, sleep, getTransactionWithRetry, REQUEST_DELAY_MS };
+module.exports = { getWtxids, sleep, getTransactionWithRetry, REQUEST_DELAY_MS };
