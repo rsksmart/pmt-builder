@@ -41,11 +41,6 @@ const getWtxids = async (transactionsClient, blockTxids, targetTxId) => {
  */
 const getWtxid = async (transactionsClient, txid) => {
     const rawTx = await getTransactionWithRetry(transactionsClient, txid);
-
-    if (!rawTx) {
-        throw new Error(`Failed to fetch transaction details for txId: ${txid}. It might not exist or is malformed.`);
-    }
-
     const tx = bitcoin.Transaction.fromHex(rawTx);
     const wtxid = tx.getHash(true).reverse().toString('hex');
     return wtxid;
@@ -90,10 +85,11 @@ const getTransactionWithRetry = async (transactionsClient, txId, retries = 0) =>
             console.warn(`Rate limit hit for ${txId}. Retrying in ${delay / 1000} seconds... (Attempt ${retries + 1}/${MAX_RETRIES})`);
             await sleep(delay);
             return getTransactionWithRetry(transactionsClient, txId, retries + 1);
-        } else {
-            console.error(`Error fetching details for txid ${txId} after ${retries} retries:`, error.message);
-            return null;
         }
+
+        throw new Error(`Failed to fetch transaction details for txId: ${txId} after ${retries} retries. Error: ${error.message}`,
+            { cause: error }
+        );
     }
 };
 

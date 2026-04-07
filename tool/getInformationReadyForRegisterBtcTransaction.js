@@ -24,10 +24,6 @@ const getInformationReadyForRegisterBtcTransaction = async (transactionHash, net
     const pmtConsideringWitness = resultPmtConsideringWitness.hex;
     const rawTargetBtcTransaction = await getTransactionWithRetry(transactionsClient, transactionHash);
 
-    if (!rawTargetBtcTransaction) {
-        throw new Error(`Failed to fetch transaction details for txId: ${transactionHash}. It might not exist or is malformed.`);
-    }
-
     const informationReadyForRegisterBtcTransaction = {
         tx: `0x${rawTargetBtcTransaction}`,
         height: blockHeight,

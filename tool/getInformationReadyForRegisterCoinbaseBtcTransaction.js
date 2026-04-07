@@ -47,13 +47,7 @@ const getAllTxs = async (transactionsClient, txIds) => {
         updateProgress(i + 1, totalTxs);
 
         const tx = await getTransactionWithRetry(transactionsClient, txId);
-
-        if (tx) {
-            txs.push(bitcoinJs.Transaction.fromHex(tx));
-        } else {
-            console.error(`Failed to fetch transaction details for txId: ${txId}. It might not exist or is malformed.`);
-            throw new Error('No wtxid found for txId: ' + txId);
-        }
+        txs.push(bitcoinJs.Transaction.fromHex(tx));
 
         // Apply throttling delay, but not after the very last request
         if (i < txIds.length - 1) {
@@ -88,7 +82,7 @@ const getInformationReadyForRegisterCoinbaseBtcTransaction = async (transactionH
     const blockTxIds = await blocksClient.getBlockTxids({ hash: blockHash });
 
     const coinbaseTxId = blockTxIds[0];
-    const rawCoinbaseBtcTx = await transactionsClient.getTxHex({ txid: coinbaseTxId });
+    const rawCoinbaseBtcTx = await getTransactionWithRetry(transactionsClient, coinbaseTxId);
     const coinbaseTx = bitcoinJs.Transaction.fromHex(rawCoinbaseBtcTx);
 
     // Hack to get the coinbase transaction hash without witness data
