@@ -99,12 +99,30 @@ const getTransactionWithRetry = async (transactionsClient, txId, retries = 0) =>
  * @returns {Promise<string[]>} - A promise that resolves to an array of transaction IDs in the same block.
  */
 
-const getBlockTxidsByTransactionHash = async (blocksClient, transactionsClient, txHash) => {
-    const transaction = await transactionsClient.getTx({ txid: txHash });
-    const blockHash = transaction.status.block_hash;
-    const blockTxids = await blocksClient.getBlockTxids({ hash: blockHash });
-
+const getBlockTxidsByTransactionHash = async (blocksClient, transactionsClient , txHash) => {
+    const { blockTxids } = await getBlockInfoByTransactionHash(blocksClient, transactionsClient, txHash);
     return blockTxids;
 };
 
-module.exports = { getWtxids, sleep, getTransactionWithRetry, getBlockTxidsByTransactionHash, REQUEST_DELAY_MS };
+
+/**
+ * Fetches the block information (block hash, block height, and transaction IDs) for a given transaction hash.
+ * @param {Object} blocksClient - The blocks client instance used to interact with the blockchain.
+ * @param {Object} transactionsClient - The transactions client instance used to interact with the blockchain.
+ * @param {string} txHash - The transaction hash for which to find the block information.
+ * @returns {Promise<{blockHash: string, blockHeight: number, blockTxids: string[]}>} - A promise that resolves to an object containing the block hash, block height, and transaction IDs in the same block.
+ */
+const getBlockInfoByTransactionHash = async (blocksClient, transactionsClient, txHash) => {
+    const transaction = await transactionsClient.getTx({ txid: txHash });
+    const blockHash = transaction.status.block_hash;
+    const blockTxids = await blocksClient.getBlockTxids({ hash: blockHash });
+    const blockHeight = transaction.status.block_height;
+
+    return {
+        blockHash,
+        blockHeight,
+        blockTxids,
+    };
+};
+
+module.exports = { getWtxids, sleep, getTransactionWithRetry, getBlockTxidsByTransactionHash, getBlockInfoByTransactionHash, REQUEST_DELAY_MS };

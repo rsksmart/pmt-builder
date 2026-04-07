@@ -1,12 +1,8 @@
 const bitcoinJs = require('bitcoinjs-lib');
 const merkleLib = require('merkle-lib');
 const mempoolJS = require("@mempool/mempool.js");
-const { sleep, getTransactionWithRetry, REQUEST_DELAY_MS } = require("./pmt-builder-utils");
+const { sleep, getTransactionWithRetry, getBlockInfoByTransactionHash, REQUEST_DELAY_MS } = require("./pmt-builder-utils");
 const pmtBuilder = require("../index");
-
-let blocksClient;
-let transactionsClient;
-
 
 // Function to update the progress in the console
 function updateProgress(currentIndex, totalCount) {
@@ -19,7 +15,6 @@ function updateProgress(currentIndex, totalCount) {
 function clearProgress() {
     process.stdout.write('\x1b[2K\r'); // ANSI escape code to clear the current line
 }
-
 
 
 /**
@@ -63,26 +58,15 @@ const getAllTxs = async (transactionsClient, txIds) => {
 };
 
 const getInformationReadyForRegisterCoinbaseBtcTransaction = async (network, txHash) => {
-
-    const bitcoinClients = mempoolJS({
+    const { bitcoin: { blocks, transactions } } = mempoolJS({
         hostname: 'mempool.space',
         network // 'testnet' | 'mainnet'
     });
 
-    // Initialize the clients for blocks and transactions
-    blocksClient = bitcoinClients.bitcoin.blocks;
-    transactionsClient = bitcoinClients.bitcoin.transactions;
+    const { blockHash, blockTxids } = await getBlockInfoByTransactionHash(blocks, transactions, txHash);
 
-    const transaction = await transactionsClient.getTx({ txid: txHash });
-
-    const blockHash = transaction.status.block_hash;
-    const blockHeight = transaction.status.block_height;
-    console.log(`btc block with the btc tx found in height ${blockHeight}. block hash: ${blockHash}`);
-
-    const blockTxIds = await blocksClient.getBlockTxids({ hash: blockHash });
-
-    const coinbaseTxId = blockTxIds[0];
-    const rawCoinbaseBtcTx = await getTransactionWithRetry(transactionsClient, coinbaseTxId);
+    const coinbaseTxId = blockTxids[0];
+    const rawCoinbaseBtcTx = await getTransactionWithRetry(transactions, coinbaseTxId);
     const coinbaseTx = bitcoinJs.Transaction.fromHex(rawCoinbaseBtcTx);
 
     // Hack to get the coinbase transaction hash without witness data
@@ -90,7 +74,7 @@ const getInformationReadyForRegisterCoinbaseBtcTransaction = async (network, txH
     const coinbaseTxHashWithoutWitness = coinbaseTxWithoutWitness.getId();
 
     const witnessReservedValue = coinbaseTx.ins[0].witness[0].toString('hex');
-    const txs = await getAllTxs(transactionsClient, blockTxIds);
+    const txs = await getAllTxs(transactions, blockTxids);
 
     // Calculate witnessRoot
     const hashesWithWitness = txs.map( x => Buffer.from(x.getHash(true)));
@@ -107,12 +91,10 @@ const getInformationReadyForRegisterCoinbaseBtcTransaction = async (network, txH
         witnessMerkleRoot: `0x${witnessMerkleRoot.toString('hex')}`,
         witnessReservedValue: `0x${witnessReservedValue}`,
     };
-
 };
 
 (async () => {
     try {
-
         const network = process.argv[2];
         const txHash = process.argv[3];
 
