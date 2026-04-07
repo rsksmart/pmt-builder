@@ -62,7 +62,7 @@ const getAllTxs = async (transactionsClient, txIds) => {
     return txs;
 };
 
-const getInformationReadyForRegisterCoinbaseBtcTransaction = async (transactionHash, network) => {
+const getInformationReadyForRegisterCoinbaseBtcTransaction = async (network, txHash) => {
 
     const bitcoinClients = mempoolJS({
         hostname: 'mempool.space',
@@ -73,7 +73,7 @@ const getInformationReadyForRegisterCoinbaseBtcTransaction = async (transactionH
     blocksClient = bitcoinClients.bitcoin.blocks;
     transactionsClient = bitcoinClients.bitcoin.transactions;
 
-    const transaction = await transactionsClient.getTx({ txid: transactionHash });
+    const transaction = await transactionsClient.getTx({ txid: txHash });
 
     const blockHash = transaction.status.block_hash;
     const blockHeight = transaction.status.block_height;
@@ -114,9 +114,9 @@ const getInformationReadyForRegisterCoinbaseBtcTransaction = async (transactionH
     try {
 
         const network = process.argv[2];
-        const transactionHash = process.argv[3];
+        const txHash = process.argv[3];
 
-        const informationReadyForRegisterCoinbaseBtcTransaction = await getInformationReadyForRegisterCoinbaseBtcTransaction(transactionHash, network);
+        const informationReadyForRegisterCoinbaseBtcTransaction = await getInformationReadyForRegisterCoinbaseBtcTransaction(network, txHash);
 
         console.log('Transaction Information ready for registerCoinbaseBtcTransaction: ', informationReadyForRegisterCoinbaseBtcTransaction);
 
