@@ -91,4 +91,20 @@ const getTransactionWithRetry = async (transactionsClient, txId, retries = 0) =>
     }
 };
 
-module.exports = { getWtxids, sleep, getTransactionWithRetry, REQUEST_DELAY_MS };
+/**
+ * Fetches the transaction IDs (txids) of all transactions in the same block as the given transaction.
+ * @param {Object} blocksClient - The blocks client instance used to interact with the blockchain.
+ * @param {Object} transactionsClient - The transactions client instance used to interact with the blockchain.
+ * @param {string} txHash - The transaction hash for which to find the block's transaction IDs.
+ * @returns {Promise<string[]>} - A promise that resolves to an array of transaction IDs in the same block.
+ */
+
+const getBlockTxidsByTransactionHash = async (blocksClient, transactionsClient, txHash) => {
+    const transaction = await transactionsClient.getTx({ txid: txHash });
+    const blockHash = transaction.status.block_hash;
+    const blockTxids = await blocksClient.getBlockTxids({ hash: blockHash });
+
+    return blockTxids;
+};
+
+module.exports = { getWtxids, sleep, getTransactionWithRetry, getBlockTxidsByTransactionHash, REQUEST_DELAY_MS };
