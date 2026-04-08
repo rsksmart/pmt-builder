@@ -11,8 +11,8 @@ const getInformationReadyForRegisterBtcTransaction = async (network, txHash) => 
 
     const { blockHeight, blockTxids } = await getBlockInfoByTransactionHash(blocks, transactions, txHash);
     const rawTargetBtcTransaction = await getTransactionWithRetry(transactions, txHash);
-    const tx = bitcoin.Transaction.fromHex(rawTargetBtcTransaction);
-    const hasWitness = tx.hasWitnesses();
+    const targetTx = bitcoin.Transaction.fromHex(rawTargetBtcTransaction);
+    const hasWitness = targetTx.hasWitnesses();
 
     let resultPmt;
     if (hasWitness) {
