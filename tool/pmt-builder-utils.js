@@ -13,7 +13,7 @@ const TOO_MANY_REQUESTS_ERROR_CODE = 429; // HTTP status code for Too Many Reque
  * @returns {Promise<{blockWtxids: string[], targetWtxid: string}>} - An object containing all wtxids and the target wtxid.
  * @throws {Error} - If the transaction details cannot be fetched or if the transaction is malformed.
  */
-const getWtxids = async (transactionsClient, blockTxids, targetTxId) => {
+const fetchBlockWtxidsWithTargetWtxid = async (transactionsClient, blockTxids, targetTxId) => {
     const blockWtxids = [];
     let targetWtxid;
     for (let i = 0; i < blockTxids.length; i++) {
@@ -116,7 +116,7 @@ const getBlockTxidsByTransactionHash = async (blocksClient, transactionsClient ,
  */
 const getBlockWtxidsWithTargetWtxidByTransactionHash = async (blocksClient, transactionsClient , txHash) => {
     const { blockTxids } = await getBlockInfoByTransactionHash(blocksClient, transactionsClient, txHash);
-    return await getWtxids(transactionsClient, blockTxids, txHash);
+    return await fetchBlockWtxidsWithTargetWtxid(transactionsClient, blockTxids, txHash);
 };
 
 
@@ -140,4 +140,4 @@ const getBlockInfoByTransactionHash = async (blocksClient, transactionsClient, t
     };
 };
 
-module.exports = { getWtxids, sleep, getTransactionWithRetry, getBlockTxidsByTransactionHash, getBlockWtxidsWithTargetWtxidByTransactionHash, getBlockInfoByTransactionHash, REQUEST_DELAY_MS };
+module.exports = { fetchBlockWtxidsWithTargetWtxid, sleep, getTransactionWithRetry, getBlockTxidsByTransactionHash, getBlockWtxidsWithTargetWtxidByTransactionHash, getBlockInfoByTransactionHash, REQUEST_DELAY_MS };

@@ -1,7 +1,7 @@
 const expect = require('chai').expect;
 const pmtBuilder = require('../index');
 const txs3000 = require('./resources/3000-txs');
-const { getWtxids } = require('../tool/pmt-builder-utils');
+const { fetchBlockWtxidsWithTargetWtxid } = require('../tool/pmt-builder-utils');
 
 describe('PMT Builder', () => {
     it('should create a valid PMT, block with a single transaction', () => {
@@ -111,7 +111,7 @@ describe('PMT Builder', () => {
     });
 });
 
-describe('getWtxids', () => {
+describe('fetchBlockWtxidsWithTargetWtxid', () => {
     const TX_ID_WITHOUT_WITNESS_1 = '2bf2c26cf756564f1d7f17f89882da32f20d694d9f2c8f04962c1116ccdf0bcf';
     const TX_ID_WITHOUT_WITNESS_2 = '027c1ae77d6253d8638f8a429f1c1136f008302f981b6b286e88b51e0a598e74';
     const TX_ID_WITH_WITNESS_1 = 'd53d1f237239aebbd2cb16f9c1f85e42cde93e02b1fb2d247114a0db2e0e30d0';
@@ -148,7 +148,7 @@ describe('getWtxids', () => {
         };
     };
 
-    const assertGetWtxidsResult = (result, blockTxIds, targetTxId) => {
+    const assertFetchBlockWtxidsWithTargetWtxidResult = (result, blockTxIds, targetTxId) => {
         expect(result.targetWtxid).to.equal(transactions[targetTxId].expectedWtxid);
         expect(result.blockWtxids.length).to.equal(blockTxIds.length);
         blockTxIds.forEach(txid => {
@@ -164,32 +164,32 @@ describe('getWtxids', () => {
     it('should return expectedWtxids as wtxids for a block with just non-witness transactions', async () => {
         const targetTxId = blockTxIdsWithoutWitness[0];
 
-        const result = await getWtxids(transactionsClient, blockTxIdsWithoutWitness, targetTxId);
+        const result = await fetchBlockWtxidsWithTargetWtxid(transactionsClient, blockTxIdsWithoutWitness, targetTxId);
 
-        assertGetWtxidsResult(result, blockTxIdsWithoutWitness, targetTxId);
+        assertFetchBlockWtxidsWithTargetWtxidResult(result, blockTxIdsWithoutWitness, targetTxId);
     });
 
     it('should return expectedWtxids as wtxids for a block with just witness transactions', async () => {
         const targetTxId = blockTxIdsWithWitness[0];
 
-        const result = await getWtxids(transactionsClient, blockTxIdsWithWitness, targetTxId);
+        const result = await fetchBlockWtxidsWithTargetWtxid(transactionsClient, blockTxIdsWithWitness, targetTxId);
 
-        assertGetWtxidsResult(result, blockTxIdsWithWitness, targetTxId);
+        assertFetchBlockWtxidsWithTargetWtxidResult(result, blockTxIdsWithWitness, targetTxId);
     });
 
     it('should return expectedWtxids as wtxids for block with mixed transactions with non-witness target transaction', async () => {
         const targetTxIdWithoutWitness = blockTxidsWithAndWithoutWitness[2];
 
-        const result = await getWtxids(transactionsClient, blockTxidsWithAndWithoutWitness, targetTxIdWithoutWitness);
+        const result = await fetchBlockWtxidsWithTargetWtxid(transactionsClient, blockTxidsWithAndWithoutWitness, targetTxIdWithoutWitness);
 
-        assertGetWtxidsResult(result, blockTxidsWithAndWithoutWitness, targetTxIdWithoutWitness);
+        assertFetchBlockWtxidsWithTargetWtxidResult(result, blockTxidsWithAndWithoutWitness, targetTxIdWithoutWitness);
     });
 
     it('should return expectedWtxids as wtxids for block with mixed transactions with target transaction with witness', async () => {
         const targetTxIdWithWitness = blockTxidsWithAndWithoutWitness[0];
 
-        const result = await getWtxids(transactionsClient, blockTxidsWithAndWithoutWitness, targetTxIdWithWitness);
+        const result = await fetchBlockWtxidsWithTargetWtxid(transactionsClient, blockTxidsWithAndWithoutWitness, targetTxIdWithWitness);
 
-        assertGetWtxidsResult(result, blockTxidsWithAndWithoutWitness, targetTxIdWithWitness);
+        assertFetchBlockWtxidsWithTargetWtxidResult(result, blockTxidsWithAndWithoutWitness, targetTxIdWithWitness);
     });
 });
