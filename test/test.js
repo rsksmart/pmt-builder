@@ -161,7 +161,7 @@ describe('getWtxids', () => {
     const blockTxidsWithAndWithoutWitness = [...blockTxIdsWithWitness, ...blockTxIdsWithoutWitness];
     const transactionsClient = createTransactionsClientMock();
 
-    it('should return txids as wtxids for a block without witness transactions', async () => {
+    it('should return txids as wtxids for a block with non-witness transactions', async () => {
         const targetTxId = blockTxIdsWithoutWitness[0];
 
         const result = await getWtxids(transactionsClient, blockTxIdsWithoutWitness, targetTxId);
@@ -177,19 +177,19 @@ describe('getWtxids', () => {
         assertGetWtxidsResult(result, blockTxIdsWithWitness, targetTxId);
     });
 
-    it('should return wtxid or txid for block transactions with and without witness and target tx without witness', async () => {
-        const targetTxId = blockTxidsWithAndWithoutWitness[2];
+    it('should return expectedIds as wtxids for block with mixed transactions with non-witness target transaction', async () => {
+        const targetTxIdWithoutWitness = blockTxidsWithAndWithoutWitness[2];
 
-        const result = await getWtxids(transactionsClient, blockTxidsWithAndWithoutWitness, targetTxId);
+        const result = await getWtxids(transactionsClient, blockTxidsWithAndWithoutWitness, targetTxIdWithoutWitness);
 
-        assertGetWtxidsResult(result, blockTxidsWithAndWithoutWitness, targetTxId);
+        assertGetWtxidsResult(result, blockTxidsWithAndWithoutWitness, targetTxIdWithoutWitness);
     });
 
-    it('should return wtxid or txid for block transactions with and without witness and target tx with witness', async () => {
-        const targetTxId = blockTxidsWithAndWithoutWitness[0];
+    it('should return expectedIds as wtxids for block with mixed transactions with target transaction with witness', async () => {
+        const targetTxIdWithWitness = blockTxidsWithAndWithoutWitness[0];
 
-        const result = await getWtxids(transactionsClient, blockTxidsWithAndWithoutWitness, targetTxId);
+        const result = await getWtxids(transactionsClient, blockTxidsWithAndWithoutWitness, targetTxIdWithWitness);
 
-        assertGetWtxidsResult(result, blockTxidsWithAndWithoutWitness, targetTxId);
+        assertGetWtxidsResult(result, blockTxidsWithAndWithoutWitness, targetTxIdWithWitness);
     });
 });
