@@ -116,8 +116,7 @@ const getBlockTxidsByTransactionHash = async (blocksClient, transactionsClient ,
  */
 const getBlockWtxidsWithTargetWtxidByTransactionHash = async (blocksClient, transactionsClient , txHash) => {
     const { blockTxids } = await getBlockInfoByTransactionHash(blocksClient, transactionsClient, txHash);
-    const { blockWtxids, targetWtxid } = await getWtxids(transactionsClient, blockTxids, txHash);
-    return { blockWtxids, targetWtxid };
+    return await getWtxids(transactionsClient, blockTxids, txHash);
 };
 
 
