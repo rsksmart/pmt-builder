@@ -16,10 +16,10 @@ const getInformationReadyForRegisterBtcTransaction = async (network, txHash) => 
 
     let resultPmt;
     if (hasWitness) {
-        resultPmt = pmtBuilder.buildPMT(blockTxids, txHash);
-    } else {
         const { blockWtxids, targetWtxid } = await getWtxids(transactions, blockTxids, txHash);
         resultPmt = pmtBuilder.buildPMT(blockWtxids, targetWtxid);
+    } else {
+        resultPmt = pmtBuilder.buildPMT(blockTxids, txHash);
     }
 
     const informationReadyForRegisterBtcTransaction = {
