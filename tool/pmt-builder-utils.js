@@ -74,10 +74,10 @@ const getTransactionWithRetry = async (transactionsClient, txId, retries = 0) =>
     try {
         return await transactionsClient.getTxHex({txid: txId});
     } catch (error) {
-        // mempool.js might wrap the error, so we check for common indicators of too many requests error code
+        // mempool.js might wrap the error, so we check for common indicators of too many requests error code (429)
         const isRateLimitError = error.response && error.response.status === TOO_MANY_REQUESTS_ERROR_CODE;
 
-        // Sometimes the error message might contain clues if status code is not directly 429
+        // Sometimes the error message might contain clues if status code is not too many requests error code (429)
         const isMempoolSpecificRateLimit = error.message && error.message.includes('Too Many Requests');
 
         if ((isRateLimitError || isMempoolSpecificRateLimit) && retries < MAX_RETRIES) {
