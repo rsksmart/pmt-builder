@@ -1,6 +1,6 @@
 const mempoolJS = require("@mempool/mempool.js");
 const pmtBuilder = require("../index");
-const { getWtxids, getBlockTxidsByTransactionHash } = require("./pmt-builder-utils");
+const { getBlockWtxidsWithTargetWtxidByTransactionHash } = require("./pmt-builder-utils");
 
 const getPmtInformationWithWitness = async (network, txHash) => {
     const { bitcoin: { blocks, transactions } } = mempoolJS({
@@ -8,8 +8,7 @@ const getPmtInformationWithWitness = async (network, txHash) => {
         network // 'testnet' | 'mainnet'
     });
 
-    const blockTxIds = await getBlockTxidsByTransactionHash(blocks, transactions, txHash);
-    const { blockWtxids, targetWtxid } = await getWtxids(transactions, blockTxIds, txHash);
+    const { blockWtxids, targetWtxid } = await getBlockWtxidsWithTargetWtxidByTransactionHash(blocks, transactions, txHash);
     const resultPmt = pmtBuilder.buildPMT(blockWtxids, targetWtxid);
 
     return resultPmt;

@@ -106,6 +106,22 @@ const getBlockTxidsByTransactionHash = async (blocksClient, transactionsClient ,
 
 
 /**
+ * Fetches the wtxids of all transactions in the same block as the given transaction, along with the target transaction's wtxid.
+ * Block transactions' wtxids and target transaction's wtxid are returned together to avoid redundant calls to the
+ * transactions client.
+ * @param {Object} blocksClient - The blocks client instance used to interact with the blockchain.
+ * @param {Object} transactionsClient - The transactions client instance used to interact with the blockchain.
+ * @param {string} txHash - The transaction hash for which to find the block's wtxids and target wtxid.
+ * @returns {Promise<{blockWtxids: string[], targetWtxid: string}>} - A promise that resolves to an object containing the wtxids of all transactions in the same block and the target transaction's wtxid.
+ */
+const getBlockWtxidsWithTargetWtxidByTransactionHash = async (blocksClient, transactionsClient , txHash) => {
+    const { blockTxids } = await getBlockInfoByTransactionHash(blocksClient, transactionsClient, txHash);
+    const { blockWtxids, targetWtxid } = await getWtxids(transactionsClient, blockTxids, txHash);
+    return { blockWtxids, targetWtxid };
+};
+
+
+/**
  * Fetches the block information (block hash, block height, and transaction IDs) for a given transaction hash.
  * @param {Object} blocksClient - The blocks client instance used to interact with the blockchain.
  * @param {Object} transactionsClient - The transactions client instance used to interact with the blockchain.
@@ -125,4 +141,4 @@ const getBlockInfoByTransactionHash = async (blocksClient, transactionsClient, t
     };
 };
 
-module.exports = { getWtxids, sleep, getTransactionWithRetry, getBlockTxidsByTransactionHash, getBlockInfoByTransactionHash, REQUEST_DELAY_MS };
+module.exports = { getWtxids, sleep, getTransactionWithRetry, getBlockTxidsByTransactionHash, getBlockWtxidsWithTargetWtxidByTransactionHash, getBlockInfoByTransactionHash, REQUEST_DELAY_MS };
