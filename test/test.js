@@ -152,7 +152,7 @@ describe('getWtxids', () => {
         expect(result.targetWtxid).to.equal(transactions[targetTxId].expectedId);
         expect(result.blockWtxids.length).to.equal(blockTxIds.length);
         blockTxIds.forEach(txid => {
-            expect(result.blockWtxids).to.be.an('array').that.includes(transactions[txid].expectedId);
+            expect(result.blockWtxids).includes(transactions[txid].expectedId);
         });
     };
 
