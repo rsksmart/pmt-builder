@@ -82,7 +82,7 @@ const getInformationReadyForRegisterCoinbaseBtcTransaction = async (network, txH
     // Get witness merkleRoot from witnessMerkleTree. This is equal to the last element in witnessMerkleTree array
     const witnessMerkleRoot = witnessMerkleTree[witnessMerkleTree.length-1].reverse();
 
-    const {hex: coinbasePmt} = pmtBuilder.buildPMT(blockTxIds, coinbaseTxHashWithoutWitness);
+    const {hex: coinbasePmt} = pmtBuilder.buildPMT(blockTxids, coinbaseTxHashWithoutWitness);
 
     return {
         btcTxSerialized: `0x${coinbaseTxWithoutWitness.toHex()}`,
