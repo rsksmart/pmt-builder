@@ -121,22 +121,22 @@ describe('getWtxids', () => {
         // https://mempool.space/testnet/tx/2bf2c26cf756564f1d7f17f89882da32f20d694d9f2c8f04962c1116ccdf0bcf - without witness
         [TX_ID_WITHOUT_WITNESS_1]: {
             rawTx: '02000000039a6075be99f85280c302d61054923f1b7f8a00718f3b7469bcf8e2a1cfebed06000000006b483045022100d087ca67b092c59ac07e81717c2ca62ff2952c4b42762168136b1bee326d6b9e022002c3b07f08a4ed5805b1185bd022e840d89fa952c583c6a5a76f998e0e962dfc012102e0b5d0549e132e3fdae7b6d11ad5ea15eb3e452681dd148867d85f7f83bc61cbfdffffffe68340cfb309aaacdb8bbe279b87e568c97416b42a8c57b72fb0fe125cf53d11000000006b48304502210097012cb79a48d914e10c9640e41d27b6db65dcedece5312ada04fc000b2e63bf022018e46e94271821006a2d2609b81ba44e0c1f91456e6b07438db23cc263451a00012102e0b5d0549e132e3fdae7b6d11ad5ea15eb3e452681dd148867d85f7f83bc61cbfdffffff460e61cdee3e4db4ab5c38c9d7254c77f93760b4c9ba43c64b136905726eece0000000006b4830450221008b893aea2f2222ea8bbc25ef65fee8a68c78d3833aeb9f8bf107800ac5152ddc022001259c70925c240da7dc50bdbc6f0a0b762d6db43458fee7deed9a61511a358d012102e0b5d0549e132e3fdae7b6d11ad5ea15eb3e452681dd148867d85f7f83bc61cbfdffffff0212520200000000001976a914bafc55fad94b8aa8ff1b94c28ecc0a47c46c7b1688ac90ab1e000000000017a9141eb5d0b64f652150d42cb0ccbc08ec710cc35218875fb44a00',
-            expectedId: TX_ID_WITHOUT_WITNESS_1,
+            expectedWtxid: TX_ID_WITHOUT_WITNESS_1,
         },
         // https://mempool.space/testnet/tx/027c1ae77d6253d8638f8a429f1c1136f008302f981b6b286e88b51e0a598e74 - without witness
         [TX_ID_WITHOUT_WITNESS_2]: {
             rawTx: '02000000012fd8c179178e262be6eedada5e4815cae7a69c1edebeb5905ff02503a25e07b7000000006a47304402205c34b857e4fad9113230a52376d435db21642d7a0de7ee075c8547ac32bae0c7022077946ca289db81a62a4db8aefd2f4c1f86a124c4160ff40be23bc16ea23dc0ee012103bab9d98b89108f556aa9da97ae87dc3d05a640d5374c45426de778c9dc685a1bfdffffff01409c00000000000017a91427cb843b29a8b6dddab3b807c581ce6ebcf0ae6a8739d73700',
-            expectedId: TX_ID_WITHOUT_WITNESS_2,
+            expectedWtxid: TX_ID_WITHOUT_WITNESS_2,
         },
         // https://mempool.space/testnet/tx/d53d1f237239aebbd2cb16f9c1f85e42cde93e02b1fb2d247114a0db2e0e30d0 - with witness
         [TX_ID_WITH_WITNESS_1]: {
             rawTx: '02000000000101fc11ed2e485faf6370461ec09b61e1d65d3e4f40dba26a6926356ec859436fac0100000023220020f8e08a83ad7e3ce13df880cdea97aba6d145b6244ead9f8512b159ebea15be55ffffffff02e8a31e00000000001976a914cab5925c59a9a413f8d443000abcc5640bdf067588acc00130030000000017a9147214a88d8e15f5a09050bff1d1a85f19d6e3b820870500473044022042a5bb9a1eb34b56a16602a4b29e6f594d82cf68a7758e05ccb2556396574b9802202900553564e44ca4e4718cae91767db380d20f2e6d0dd7fbcd9599eee5713d5101473044022043d7fe49578ff16e8abfda7951bad1aeb9c0a93d5157367ea03e09101c0d3770022061270ce8edfa9dae3e5e135d8673dd16f6c646c480cca42a11fe83f2960833710100db6452210379d78dcae0be90715a088413c588da6a9381aae42e504f6e05c7b5204ed5bf3a2103d9d48cdc0fdf039d08371c64b1e86e1715e9898d4680595f1d4e3398dbdd9e9e2103df89bd3d49c1ebdef2e9b4e77c84e048dbbcf7c41735b073a68fdcf5d086bd2853ae670350cd00b27552210216c23b2ea8e4f11c3f9e22711addb1d16a93964796913830856b568cc3ea21d3210275562901dd8faae20de0a4166362a4f82188db77dbed4ca887422ea1ec185f1421034db69f2112f4fb1bb6141bf6e2bd6631f0484d0bd95b16767902c9fe219d4a6f53ae6800000000',
-            expectedId: '84606c5f6c896f75a4b5d38c756a33cf7c2cd5fa308fe93d708a3b04d281f34b',
+            expectedWtxid: '84606c5f6c896f75a4b5d38c756a33cf7c2cd5fa308fe93d708a3b04d281f34b',
         },
         // https://mempool.space/testnet/tx/04c151a3020c9f6548573b4d28d978cec17925bb3bc058fa44db585fd4aa62af - with witness
         [TX_ID_WITH_WITNESS_2]: {
             rawTx: '0200000000010140010513c5a38dcc922f7ddd3c3ce029f6022a64f28b4e6e46da63d42518db020100000000ffffffff030000000000000000306a2e52534b5401b14c2fc44bde760ded1d610e7a9fda02e780966e011ae302de6607907116810e598b83897b00f764d521a107000000000017a914a3562b6a12b34eb98a8164ea5c5f7e40fd6ddac887944bba0100000000160014b19593039df40f5b621a9bc362b22358979b1e9602483045022100c6f48cef8f4900f74ec137acdb3d6c739d07fa2ecd986aa21e3d4a8dda05554f02202df9e534a55d96e86679471d728e4f9e7143c8d44e4a86ce5cb23229e89219fa012103fae61e5a124c05030c88df4b594b89b72fd409229d0c58a01799b01a9617885100000000',
-            expectedId: '4ddb1ec5fa660d715d82b860d1a51a219def90a17ccfbf7e40784005e0ea310f',
+            expectedWtxid: '4ddb1ec5fa660d715d82b860d1a51a219def90a17ccfbf7e40784005e0ea310f',
         },
     };
 
@@ -149,10 +149,10 @@ describe('getWtxids', () => {
     };
 
     const assertGetWtxidsResult = (result, blockTxIds, targetTxId) => {
-        expect(result.targetWtxid).to.equal(transactions[targetTxId].expectedId);
+        expect(result.targetWtxid).to.equal(transactions[targetTxId].expectedWtxid);
         expect(result.blockWtxids.length).to.equal(blockTxIds.length);
         blockTxIds.forEach(txid => {
-            expect(result.blockWtxids).includes(transactions[txid].expectedId);
+            expect(result.blockWtxids).includes(transactions[txid].expectedWtxid);
         });
     };
 
@@ -161,7 +161,7 @@ describe('getWtxids', () => {
     const blockTxidsWithAndWithoutWitness = [...blockTxIdsWithWitness, ...blockTxIdsWithoutWitness];
     const transactionsClient = createTransactionsClientMock();
 
-    it('should return txids as wtxids for a block with non-witness transactions', async () => {
+    it('should return expectedWtxids as wtxids for a block with just non-witness transactions', async () => {
         const targetTxId = blockTxIdsWithoutWitness[0];
 
         const result = await getWtxids(transactionsClient, blockTxIdsWithoutWitness, targetTxId);
@@ -169,7 +169,7 @@ describe('getWtxids', () => {
         assertGetWtxidsResult(result, blockTxIdsWithoutWitness, targetTxId);
     });
 
-    it('should return wtxids for a block with witness transactions', async () => {
+    it('should return expectedWtxids as wtxids for a block with just witness transactions', async () => {
         const targetTxId = blockTxIdsWithWitness[0];
 
         const result = await getWtxids(transactionsClient, blockTxIdsWithWitness, targetTxId);
@@ -177,7 +177,7 @@ describe('getWtxids', () => {
         assertGetWtxidsResult(result, blockTxIdsWithWitness, targetTxId);
     });
 
-    it('should return expectedIds as wtxids for block with mixed transactions with non-witness target transaction', async () => {
+    it('should return expectedWtxids as wtxids for block with mixed transactions with non-witness target transaction', async () => {
         const targetTxIdWithoutWitness = blockTxidsWithAndWithoutWitness[2];
 
         const result = await getWtxids(transactionsClient, blockTxidsWithAndWithoutWitness, targetTxIdWithoutWitness);
@@ -185,7 +185,7 @@ describe('getWtxids', () => {
         assertGetWtxidsResult(result, blockTxidsWithAndWithoutWitness, targetTxIdWithoutWitness);
     });
 
-    it('should return expectedIds as wtxids for block with mixed transactions with target transaction with witness', async () => {
+    it('should return expectedWtxids as wtxids for block with mixed transactions with target transaction with witness', async () => {
         const targetTxIdWithWitness = blockTxidsWithAndWithoutWitness[0];
 
         const result = await getWtxids(transactionsClient, blockTxidsWithAndWithoutWitness, targetTxIdWithWitness);
