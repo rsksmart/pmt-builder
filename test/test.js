@@ -148,7 +148,7 @@ describe('getWtxids', () => {
         };
     };
 
-    const assertWtxids = (result, blockTxIds, targetTxId) => {
+    const assertGetWtxidsResult = (result, blockTxIds, targetTxId) => {
         expect(result.targetWtxid).to.equal(transactions[targetTxId].expectedId);
         expect(result.blockWtxids.length).to.equal(blockTxIds.length);
         blockTxIds.forEach(txid => {
@@ -166,7 +166,7 @@ describe('getWtxids', () => {
 
         const result = await getWtxids(transactionsClient, blockTxIdsWithoutWitness, targetTxId);
 
-        assertWtxids(result, blockTxIdsWithoutWitness, targetTxId);
+        assertGetWtxidsResult(result, blockTxIdsWithoutWitness, targetTxId);
     });
 
     it('should return wtxids for a block with witness transactions', async () => {
@@ -174,7 +174,7 @@ describe('getWtxids', () => {
 
         const result = await getWtxids(transactionsClient, blockTxIdsWithWitness, targetTxId);
 
-        assertWtxids(result, blockTxIdsWithWitness, targetTxId);
+        assertGetWtxidsResult(result, blockTxIdsWithWitness, targetTxId);
     });
 
     it('should return wtxid or txid for block transactions with and without witness and target tx without witness', async () => {
@@ -182,7 +182,7 @@ describe('getWtxids', () => {
 
         const result = await getWtxids(transactionsClient, blockTxidsWithAndWithoutWitness, targetTxId);
 
-        assertWtxids(result, blockTxidsWithAndWithoutWitness, targetTxId);
+        assertGetWtxidsResult(result, blockTxidsWithAndWithoutWitness, targetTxId);
     });
 
     it('should return wtxid or txid for block transactions with and without witness and target tx with witness', async () => {
@@ -190,6 +190,6 @@ describe('getWtxids', () => {
 
         const result = await getWtxids(transactionsClient, blockTxidsWithAndWithoutWitness, targetTxId);
 
-        assertWtxids(result, blockTxidsWithAndWithoutWitness, targetTxId);
+        assertGetWtxidsResult(result, blockTxidsWithAndWithoutWitness, targetTxId);
     });
 });
