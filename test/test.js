@@ -1,9 +1,13 @@
 const expect = require('chai').expect;
 const pmtBuilder = require('../index');
 const txs3000 = require('./resources/3000-txs');
+const blockWithTargetWitnessTx = require('./resources/btc-block-944725.json');
+const blockWithNonWitnessTargetTx = require('./resources/btc-block-919405.json');
+const btcTestnetBlockWithTargetWitnessTx = require('./resources/btc-testnet-block-4894944.json');
+const btcTestnetBlockWithNonWitnessTargetTx = require('./resources/btc-testnet-block-4706672.json');
 const { fetchBlockWtxidsWithTargetWtxid } = require('../tool/pmt-builder-utils');
 
-describe('PMT Builder', () => {
+describe('buildPMT using non-witness target transaction', () => {
     it('should create a valid PMT, block with a single transaction', () => {
         let blockTransactions = [
             '8f01832aa125683490e70a9142ccd9c49485b84708180487b5f35dc7795a3afd'
@@ -11,10 +15,10 @@ describe('PMT Builder', () => {
 
         let resultPmt = pmtBuilder.buildPMT(blockTransactions, blockTransactions[0]);
         let expectedPMT = '0100000001fd3a5a79c75df3b58704180847b88594c4d9cc42910ae790346825a12a83018f0101';
-        
+
         expect(resultPmt.hex).to.be.eq(expectedPMT);
     });
-    
+
     it('should create a valid PMT, small block with 6 transactions', () => {
         let blockTransactions = [
             '8f01832aa125683490e70a9142ccd9c49485b84708180487b5f35dc7795a3afd',
@@ -94,6 +98,28 @@ describe('PMT Builder', () => {
         expect(() => pmtBuilder.buildPMT(blockTransactions, randomHash)).to.throw('Filtered hash provided is not part of the leaves');
     });
 
+    // https://mempool.space/tx/70e349cd8b6ce45a15960f2938f4e9b9a56022310956e159a8ef0d8890cc03db
+    // registerBtcTransaction: https://explorer.rootstock.io/tx/0xd97aaaefa509b302847dfdb2611dfdaf7eadee4fef9588e6e65ec023f8e92106
+    it('should create a valid PMT for a non-witness target transaction using real mainnet block data', async () => {
+        const blockTransactions = blockWithNonWitnessTargetTx.blockTxids;
+        const targetTxId = blockWithNonWitnessTargetTx.targetTxid;
+        const resultPmt = pmtBuilder.buildPMT(blockTransactions, targetTxId);
+        const expectedPMT =
+            'c30500000c58bbb4a76b59279db671806b928532ac89722df39ab20431008a8d024e8e6e79fc10e069da74f1833988859c6ac4f986e1b2a384ca15c8731dba9590a9d316ac6891781fa1afc3e1c04334b3c098bfa4ce913ffc21f846e63d5c806b75ee3f70db03cc90880defa859e15609312260a5b9e9f438290f96155ae46c8bcd49e3707bb22e9c554eb97ab7f14a0efb80197984e86267eb3193666cdb79883a4ba59e1334485d50ea5631a37da67c12832ac406098cc7c403fc0ab604042db7ac6992d629480b22443be9ce1fd76768ace340ecb3c358f5b1fa375fad85609b790adc7c8255382bb81077f42a1a510052a7f677026f21069ee6b10f66ffaf66774bb1f605c43c820457750d1f02bbf086aaba407721a9bd44b0276e9b8b93deec4cde2e7e8ff84eb3a6137248da2f9a750b86ba87ace7d06fe9c953bac9f70388e91b09530ac5367b15dded1825d5baf28a260de6b473f889e5754eb1ebc7298b43dba9498136f90b7b06eb72a1d12605dcd2cd1729e4136fe43dd69060b984b7a10c03bf7600';
+        expect(resultPmt.hex).to.be.eq(expectedPMT);
+    });
+
+    // https://mempool.space/testnet/tx/5cec844c7d2443175c91d39d7be0acf9e4cfc468fbfe3f3dd05c747d60c59e12
+    // registerBtcTransaction: https://explorer.testnet.rootstock.io/tx/0xd81617e93c1ebb6397b3ca28e1db06a240e12941c227556c59a96c89ff8722b1
+    it('should create a valid PMT for a non-witness pegout using real testnet block data', () => {
+        const blockTransactions = btcTestnetBlockWithNonWitnessTargetTx.blockTxids;
+        const targetTxId = btcTestnetBlockWithNonWitnessTargetTx.targetTxid;
+        const resultPmt = pmtBuilder.buildPMT(blockTransactions, targetTxId);
+        const expectedPMT =
+            '0c000000050eabed27e469d3c79e9484933c74796949ea1cdee42aaa75b8e1dfb255efefe5129ec5607d745cd03d3ffefb68c4cfe4f9ace07b9dd3915c1743247d4c84ec5c96a358309ef9c6f274cdd782879070cbd09fcd6cadb67a3e69ae40277ac8b296794b7dedce3565edac112c4daf4358089674f4218e2c4c5bb1d72c85f9b1406c521e57ed13730b1451f8a9460bc6dc361998e42322b671b94f30a5d974288252022f00';
+        expect(resultPmt.hex).to.be.eq(expectedPMT);
+    });
+
     it('should fail when passing a filtered transaction that is not part of the block', () => {
         let blockTransactions = [
             '8f01832aa125683490e70a9142ccd9c49485b84708180487b5f35dc7795a3afd',
@@ -146,21 +172,49 @@ describe('buildPMT using target transaction with witness', () => {
         TX_ID_WITH_WITNESS_2,
     ];
 
-    const createTransactionsClientMock = () => {
+    const createTransactionsClientMock = (transactionSource) => {
         return {
             getTxHex: async ({ txid }) => {
-                return transactions[txid].rawTx;
+                return transactionSource[txid].rawTx;
             },
         };
     };
 
-    const transactionsClient = createTransactionsClientMock();
-
     it('should create a valid pmt with target transaction with witness', async () => {
+        const transactionsClient = createTransactionsClientMock(transactions);
         const result = await fetchBlockWtxidsWithTargetWtxid(transactionsClient, blockTransactionsIds, TX_ID_WITH_WITNESS_1);
         const resultPmt = pmtBuilder.buildPMT(result.blockWtxids, result.targetWtxid);
 
         const expectedPMT = '04000000039d38b9a0944d01f3e403b9f5011113e0c660647f49c6d647600bb50f9248aab64bf381d2043b8a703de98f30fad52c7ccf336a758cd3b5a4756f896c5f6c60840f31eae0054078407ebfcf7ca190ef9d211aa5d160b8825d710d66fac51edb4d010d';
+        expect(resultPmt.hex).to.be.eq(expectedPMT);
+    });
+
+    // Pegout: https://mempool.space/tx/0897ffa4b2504deb174c86d2d2038cb74ebe3f8f0a0806b6de56325f3db695ac
+    // registerBtcTransaction: https://explorer.rootstock.io/tx/0xee327ae35833ff0166b63d2027df15681c0c9f8711a255fc7beae8c9d3a85503
+    it('should create a valid pmt with target transaction with witness using real mainnet block data', async () => {
+        const transactionsClient = createTransactionsClientMock(blockWithTargetWitnessTx.transactions);
+        const result = await fetchBlockWtxidsWithTargetWtxid(
+            transactionsClient,
+            blockWithTargetWitnessTx.blockTxids,
+            blockWithTargetWitnessTx.targetTxid
+        );
+        const resultPmt = pmtBuilder.buildPMT(result.blockWtxids, result.targetWtxid);
+        const expectedPMT = '240c00000dcfe29749249ea679125a62024fc683ed85f9cd00685849548b41f8a014b59069e43618e4c60fdded1c9c4a516798e96e5a81bfd959c57b30d527ba49a23abb2166097347d4a47570c31264ce2858fef09c3d5b2269025e39750499d2a8536569b2b7426a66a3f7fa015383b01d948b28ec03417cb9c9624bf7789b48f3bb706d410819a9855f1c7f95ed7bd721f8e9b391546a1073e9a8296f74d4a5e4b006b784baf7f828ce5c643b3eb6c10d1512c0197ffdd14b654b27b0543d83698d61b8397b01a665c7898e4ad89e4c648261c6feb6a664ee23d9c066251c6c503d7e463c7390360c94f44bb4c693e5f941d2439f18b12c7a88157c5ebeae2c7cbfc85e55209b7a6184a8544ffae669f9cbe9cdb52246a090e87d875f092df5956c41d28b05b44cfcf0a5af9d157d0f36c4db83a18dd51dc919e72b8d0e7b0bbc59552fb889d8cc8cf5c4ac28bcef16f61c4fed5e59ee707f559d1768755826e9949d627b770c0f85e38e9e80ee70ea0ba5f0e5b64c90090abeeb2b4a59c6b9adb17ab073d2551f7841c964bf191dd7d21260bdaa9da80e79bf3f2787cfe87014a6387d04df6d0100';
+        expect(resultPmt.hex).to.be.eq(expectedPMT);
+    });
+
+    // Pegout: https://mempool.space/testnet/tx/ce0126ed272924b872f3b221ffd854fa986f3afacc1e95f72353ed7cd19748f4
+    // registerBtcTransaction: https://explorer.testnet.rootstock.io/tx/0x9942a24398e56cf43b7ac755dead057fe0fcd459ebe1ac61f1609be40bb7de69
+    it('should create a valid pmt with target transaction with witness pegout using real testnet block data', async () => {
+        const transactionsClient = createTransactionsClientMock(btcTestnetBlockWithTargetWitnessTx.transactions);
+        const result = await fetchBlockWtxidsWithTargetWtxid(
+            transactionsClient,
+            btcTestnetBlockWithTargetWitnessTx.blockTxids,
+            btcTestnetBlockWithTargetWitnessTx.targetTxid
+        );
+        const resultPmt = pmtBuilder.buildPMT(result.blockWtxids, result.targetWtxid);
+        const expectedPMT =
+            '0300000003000000000000000000000000000000000000000000000000000000000000000034f56b77f0537fd887993e34d04fb7a9d7c5a849e9e212bf7167afbdd1f2ba517620769b03889beb0416f39a0b68479835ab8eec55d02b4c84d7bff9cee6032b010b';
         expect(resultPmt.hex).to.be.eq(expectedPMT);
     });
 });
