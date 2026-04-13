@@ -25,9 +25,6 @@ const fetchBlockWtxidsWithTargetWtxid = async (transactionsClient, blockTxids, t
         }
 
         blockWtxids.push(wtxid);
-        if (i < blockTxids.length - 1) {
-            await sleep();
-        }
     }
     return { blockWtxids, targetWtxid };
 };
