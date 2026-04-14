@@ -1,41 +1,42 @@
 const mempoolJS = require("@mempool/mempool.js");
 const pmtBuilder = require("../index");
+const bitcoin = require('bitcoinjs-lib');
+const { fetchBlockWtxidsWithTargetWtxid, getTransactionWithRetry, getBlockInfoByTransactionHash } = require("./pmt-builder-utils");
 
-const getInformationReadyForRegisterBtcTransaction = async (transactionHash, network) => {
-
+const getInformationReadyForRegisterBtcTransaction = async (network, txHash) => {
     const { bitcoin: { blocks, transactions } } = mempoolJS({
         hostname: 'mempool.space',
         network // 'testnet' | 'mainnet'
     });
 
-    const transaction = await transactions.getTx({ txid: transactionHash });
-    const blockHash = transaction.status.block_hash;
-    const blockHeight = transaction.status.block_height;
+    const { blockHeight, blockTxids } = await getBlockInfoByTransactionHash(blocks, transactions, txHash);
+    const rawTargetBtcTransaction = await getTransactionWithRetry(transactions, txHash);
+    const targetTx = bitcoin.Transaction.fromHex(rawTargetBtcTransaction);
+    const hasWitness = targetTx.hasWitnesses();
 
-    const blockTxids = await blocks.getBlockTxids({ hash: blockHash });
-    const rawBtcTransaction = await transactions.getTxHex({ txid: transactionHash });
-
-    const resultPmt = pmtBuilder.buildPMT(blockTxids, transactionHash);
-
-    const pmt = resultPmt.hex;
+    let resultPmt;
+    if (hasWitness) {
+        const { blockWtxids, targetWtxid } = await fetchBlockWtxidsWithTargetWtxid(transactions, blockTxids, txHash);
+        resultPmt = pmtBuilder.buildPMT(blockWtxids, targetWtxid);
+    } else {
+        resultPmt = pmtBuilder.buildPMT(blockTxids, txHash);
+    }
 
     const informationReadyForRegisterBtcTransaction = {
-        tx: `0x${rawBtcTransaction}`,
+        tx: `0x${rawTargetBtcTransaction}`,
         height: blockHeight,
-        pmt: `0x${pmt}`,
+        pmt: `0x${resultPmt.hex}`,
     };
 
     return informationReadyForRegisterBtcTransaction;
-
 };
 
 (async () => {
     try {
-
         const network = process.argv[2];
-        const transactionHash = process.argv[3];
+        const txHash = process.argv[3];
 
-        const informationReadyForRegisterBtcTransaction = await getInformationReadyForRegisterBtcTransaction(transactionHash, network);
+        const informationReadyForRegisterBtcTransaction = await getInformationReadyForRegisterBtcTransaction(network, txHash);
 
         console.log('Transaction Information ready for registerBtcTransaction: ', informationReadyForRegisterBtcTransaction);
 
@@ -43,4 +44,3 @@ const getInformationReadyForRegisterBtcTransaction = async (transactionHash, net
         console.log(e);
     }
 })();
-

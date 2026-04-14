@@ -1,8 +1,13 @@
-let expect = require('chai').expect;
-let pmtBuilder = require('../index');
+const expect = require('chai').expect;
+const pmtBuilder = require('../index');
 const txs3000 = require('./resources/3000-txs');
+const blockWithTargetWitnessTx = require('./resources/btc-block-944725.json');
+const blockWithNonWitnessTargetTx = require('./resources/btc-block-919405.json');
+const btcTestnetBlockWithTargetWitnessTx = require('./resources/btc-testnet-block-4894944.json');
+const btcTestnetBlockWithNonWitnessTargetTx = require('./resources/btc-testnet-block-4706672.json');
+const { fetchBlockWtxidsWithTargetWtxid } = require('../tool/pmt-builder-utils');
 
-describe('PMT Builder', () => {
+describe('buildPMT using non-witness target transaction', () => {
     it('should create a valid PMT, block with a single transaction', () => {
         let blockTransactions = [
             '8f01832aa125683490e70a9142ccd9c49485b84708180487b5f35dc7795a3afd'
@@ -10,10 +15,10 @@ describe('PMT Builder', () => {
 
         let resultPmt = pmtBuilder.buildPMT(blockTransactions, blockTransactions[0]);
         let expectedPMT = '0100000001fd3a5a79c75df3b58704180847b88594c4d9cc42910ae790346825a12a83018f0101';
-        
+
         expect(resultPmt.hex).to.be.eq(expectedPMT);
     });
-    
+
     it('should create a valid PMT, small block with 6 transactions', () => {
         let blockTransactions = [
             '8f01832aa125683490e70a9142ccd9c49485b84708180487b5f35dc7795a3afd',
@@ -93,6 +98,28 @@ describe('PMT Builder', () => {
         expect(() => pmtBuilder.buildPMT(blockTransactions, randomHash)).to.throw('Filtered hash provided is not part of the leaves');
     });
 
+    // https://mempool.space/tx/70e349cd8b6ce45a15960f2938f4e9b9a56022310956e159a8ef0d8890cc03db
+    // registerBtcTransaction: https://explorer.rootstock.io/tx/0xd97aaaefa509b302847dfdb2611dfdaf7eadee4fef9588e6e65ec023f8e92106
+    it('should create a valid PMT for a non-witness target transaction using real mainnet block data', async () => {
+        const blockTransactions = blockWithNonWitnessTargetTx.blockTxids;
+        const targetTxId = blockWithNonWitnessTargetTx.targetTxid;
+        const resultPmt = pmtBuilder.buildPMT(blockTransactions, targetTxId);
+        const expectedPMT =
+            'c30500000c58bbb4a76b59279db671806b928532ac89722df39ab20431008a8d024e8e6e79fc10e069da74f1833988859c6ac4f986e1b2a384ca15c8731dba9590a9d316ac6891781fa1afc3e1c04334b3c098bfa4ce913ffc21f846e63d5c806b75ee3f70db03cc90880defa859e15609312260a5b9e9f438290f96155ae46c8bcd49e3707bb22e9c554eb97ab7f14a0efb80197984e86267eb3193666cdb79883a4ba59e1334485d50ea5631a37da67c12832ac406098cc7c403fc0ab604042db7ac6992d629480b22443be9ce1fd76768ace340ecb3c358f5b1fa375fad85609b790adc7c8255382bb81077f42a1a510052a7f677026f21069ee6b10f66ffaf66774bb1f605c43c820457750d1f02bbf086aaba407721a9bd44b0276e9b8b93deec4cde2e7e8ff84eb3a6137248da2f9a750b86ba87ace7d06fe9c953bac9f70388e91b09530ac5367b15dded1825d5baf28a260de6b473f889e5754eb1ebc7298b43dba9498136f90b7b06eb72a1d12605dcd2cd1729e4136fe43dd69060b984b7a10c03bf7600';
+        expect(resultPmt.hex).to.be.eq(expectedPMT);
+    });
+
+    // https://mempool.space/testnet/tx/5cec844c7d2443175c91d39d7be0acf9e4cfc468fbfe3f3dd05c747d60c59e12
+    // registerBtcTransaction: https://explorer.testnet.rootstock.io/tx/0xd81617e93c1ebb6397b3ca28e1db06a240e12941c227556c59a96c89ff8722b1
+    it('should create a valid PMT for a non-witness pegout using real testnet block data', () => {
+        const blockTransactions = btcTestnetBlockWithNonWitnessTargetTx.blockTxids;
+        const targetTxId = btcTestnetBlockWithNonWitnessTargetTx.targetTxid;
+        const resultPmt = pmtBuilder.buildPMT(blockTransactions, targetTxId);
+        const expectedPMT =
+            '0c000000050eabed27e469d3c79e9484933c74796949ea1cdee42aaa75b8e1dfb255efefe5129ec5607d745cd03d3ffefb68c4cfe4f9ace07b9dd3915c1743247d4c84ec5c96a358309ef9c6f274cdd782879070cbd09fcd6cadb67a3e69ae40277ac8b296794b7dedce3565edac112c4daf4358089674f4218e2c4c5bb1d72c85f9b1406c521e57ed13730b1451f8a9460bc6dc361998e42322b671b94f30a5d974288252022f00';
+        expect(resultPmt.hex).to.be.eq(expectedPMT);
+    });
+
     it('should fail when passing a filtered transaction that is not part of the block', () => {
         let blockTransactions = [
             '8f01832aa125683490e70a9142ccd9c49485b84708180487b5f35dc7795a3afd',
@@ -107,5 +134,87 @@ describe('PMT Builder', () => {
 
         // fail because the filtered transaction is not part of the transactions list
         expect(() => pmtBuilder.buildPMT(blockTransactions, randomHash)).to.throw('Filtered hash provided is not part of the leaves');
+    });
+});
+
+describe('buildPMT using target transaction with witness', () => {
+    // https://mempool.space/testnet/tx/2bf2c26cf756564f1d7f17f89882da32f20d694d9f2c8f04962c1116ccdf0bcf
+    const TX_ID_WITHOUT_WITNESS_1 = '2bf2c26cf756564f1d7f17f89882da32f20d694d9f2c8f04962c1116ccdf0bcf';
+
+    // https://mempool.space/testnet/tx/027c1ae77d6253d8638f8a429f1c1136f008302f981b6b286e88b51e0a598e74
+    const TX_ID_WITHOUT_WITNESS_2 = '027c1ae77d6253d8638f8a429f1c1136f008302f981b6b286e88b51e0a598e74';
+
+    // https://mempool.space/testnet/tx/d53d1f237239aebbd2cb16f9c1f85e42cde93e02b1fb2d247114a0db2e0e30d0
+    const TX_ID_WITH_WITNESS_1 = 'd53d1f237239aebbd2cb16f9c1f85e42cde93e02b1fb2d247114a0db2e0e30d0';
+
+    // https://mempool.space/testnet/tx/04c151a3020c9f6548573b4d28d978cec17925bb3bc058fa44db585fd4aa62af
+    const TX_ID_WITH_WITNESS_2 = '04c151a3020c9f6548573b4d28d978cec17925bb3bc058fa44db585fd4aa62af';
+
+    const transactions = {
+        [TX_ID_WITHOUT_WITNESS_1]: {
+            rawTx: '02000000039a6075be99f85280c302d61054923f1b7f8a00718f3b7469bcf8e2a1cfebed06000000006b483045022100d087ca67b092c59ac07e81717c2ca62ff2952c4b42762168136b1bee326d6b9e022002c3b07f08a4ed5805b1185bd022e840d89fa952c583c6a5a76f998e0e962dfc012102e0b5d0549e132e3fdae7b6d11ad5ea15eb3e452681dd148867d85f7f83bc61cbfdffffffe68340cfb309aaacdb8bbe279b87e568c97416b42a8c57b72fb0fe125cf53d11000000006b48304502210097012cb79a48d914e10c9640e41d27b6db65dcedece5312ada04fc000b2e63bf022018e46e94271821006a2d2609b81ba44e0c1f91456e6b07438db23cc263451a00012102e0b5d0549e132e3fdae7b6d11ad5ea15eb3e452681dd148867d85f7f83bc61cbfdffffff460e61cdee3e4db4ab5c38c9d7254c77f93760b4c9ba43c64b136905726eece0000000006b4830450221008b893aea2f2222ea8bbc25ef65fee8a68c78d3833aeb9f8bf107800ac5152ddc022001259c70925c240da7dc50bdbc6f0a0b762d6db43458fee7deed9a61511a358d012102e0b5d0549e132e3fdae7b6d11ad5ea15eb3e452681dd148867d85f7f83bc61cbfdffffff0212520200000000001976a914bafc55fad94b8aa8ff1b94c28ecc0a47c46c7b1688ac90ab1e000000000017a9141eb5d0b64f652150d42cb0ccbc08ec710cc35218875fb44a00'
+        },
+        [TX_ID_WITHOUT_WITNESS_2]: {
+            rawTx: '02000000012fd8c179178e262be6eedada5e4815cae7a69c1edebeb5905ff02503a25e07b7000000006a47304402205c34b857e4fad9113230a52376d435db21642d7a0de7ee075c8547ac32bae0c7022077946ca289db81a62a4db8aefd2f4c1f86a124c4160ff40be23bc16ea23dc0ee012103bab9d98b89108f556aa9da97ae87dc3d05a640d5374c45426de778c9dc685a1bfdffffff01409c00000000000017a91427cb843b29a8b6dddab3b807c581ce6ebcf0ae6a8739d73700'
+        },
+        [TX_ID_WITH_WITNESS_1]: {
+            rawTx: '02000000000101fc11ed2e485faf6370461ec09b61e1d65d3e4f40dba26a6926356ec859436fac0100000023220020f8e08a83ad7e3ce13df880cdea97aba6d145b6244ead9f8512b159ebea15be55ffffffff02e8a31e00000000001976a914cab5925c59a9a413f8d443000abcc5640bdf067588acc00130030000000017a9147214a88d8e15f5a09050bff1d1a85f19d6e3b820870500473044022042a5bb9a1eb34b56a16602a4b29e6f594d82cf68a7758e05ccb2556396574b9802202900553564e44ca4e4718cae91767db380d20f2e6d0dd7fbcd9599eee5713d5101473044022043d7fe49578ff16e8abfda7951bad1aeb9c0a93d5157367ea03e09101c0d3770022061270ce8edfa9dae3e5e135d8673dd16f6c646c480cca42a11fe83f2960833710100db6452210379d78dcae0be90715a088413c588da6a9381aae42e504f6e05c7b5204ed5bf3a2103d9d48cdc0fdf039d08371c64b1e86e1715e9898d4680595f1d4e3398dbdd9e9e2103df89bd3d49c1ebdef2e9b4e77c84e048dbbcf7c41735b073a68fdcf5d086bd2853ae670350cd00b27552210216c23b2ea8e4f11c3f9e22711addb1d16a93964796913830856b568cc3ea21d3210275562901dd8faae20de0a4166362a4f82188db77dbed4ca887422ea1ec185f1421034db69f2112f4fb1bb6141bf6e2bd6631f0484d0bd95b16767902c9fe219d4a6f53ae6800000000'
+        },
+        [TX_ID_WITH_WITNESS_2]: {
+            rawTx: '0200000000010140010513c5a38dcc922f7ddd3c3ce029f6022a64f28b4e6e46da63d42518db020100000000ffffffff030000000000000000306a2e52534b5401b14c2fc44bde760ded1d610e7a9fda02e780966e011ae302de6607907116810e598b83897b00f764d521a107000000000017a914a3562b6a12b34eb98a8164ea5c5f7e40fd6ddac887944bba0100000000160014b19593039df40f5b621a9bc362b22358979b1e9602483045022100c6f48cef8f4900f74ec137acdb3d6c739d07fa2ecd986aa21e3d4a8dda05554f02202df9e534a55d96e86679471d728e4f9e7143c8d44e4a86ce5cb23229e89219fa012103fae61e5a124c05030c88df4b594b89b72fd409229d0c58a01799b01a9617885100000000'
+        },
+    };
+
+    const blockTransactionsIds = [
+        TX_ID_WITHOUT_WITNESS_1,
+        TX_ID_WITHOUT_WITNESS_2,
+        TX_ID_WITH_WITNESS_1,
+        TX_ID_WITH_WITNESS_2,
+    ];
+
+    const createTransactionsClientMock = (transactionSource) => {
+        return {
+            getTxHex: async ({ txid }) => {
+                return transactionSource[txid].rawTx;
+            },
+        };
+    };
+
+    it('should create a valid pmt with target transaction with witness', async () => {
+        const transactionsClient = createTransactionsClientMock(transactions);
+        const result = await fetchBlockWtxidsWithTargetWtxid(transactionsClient, blockTransactionsIds, TX_ID_WITH_WITNESS_1);
+        const resultPmt = pmtBuilder.buildPMT(result.blockWtxids, result.targetWtxid);
+
+        const expectedPMT = '04000000039d38b9a0944d01f3e403b9f5011113e0c660647f49c6d647600bb50f9248aab64bf381d2043b8a703de98f30fad52c7ccf336a758cd3b5a4756f896c5f6c60840f31eae0054078407ebfcf7ca190ef9d211aa5d160b8825d710d66fac51edb4d010d';
+        expect(resultPmt.hex).to.be.eq(expectedPMT);
+    });
+
+    // Pegout: https://mempool.space/tx/0897ffa4b2504deb174c86d2d2038cb74ebe3f8f0a0806b6de56325f3db695ac
+    // registerBtcTransaction: https://explorer.rootstock.io/tx/0xee327ae35833ff0166b63d2027df15681c0c9f8711a255fc7beae8c9d3a85503
+    it('should create a valid pmt with target transaction with witness using real mainnet block data', async () => {
+        const transactionsClient = createTransactionsClientMock(blockWithTargetWitnessTx.transactions);
+        const result = await fetchBlockWtxidsWithTargetWtxid(
+            transactionsClient,
+            blockWithTargetWitnessTx.blockTxids,
+            blockWithTargetWitnessTx.targetTxid
+        );
+        const resultPmt = pmtBuilder.buildPMT(result.blockWtxids, result.targetWtxid);
+        const expectedPMT = '240c00000dcfe29749249ea679125a62024fc683ed85f9cd00685849548b41f8a014b59069e43618e4c60fdded1c9c4a516798e96e5a81bfd959c57b30d527ba49a23abb2166097347d4a47570c31264ce2858fef09c3d5b2269025e39750499d2a8536569b2b7426a66a3f7fa015383b01d948b28ec03417cb9c9624bf7789b48f3bb706d410819a9855f1c7f95ed7bd721f8e9b391546a1073e9a8296f74d4a5e4b006b784baf7f828ce5c643b3eb6c10d1512c0197ffdd14b654b27b0543d83698d61b8397b01a665c7898e4ad89e4c648261c6feb6a664ee23d9c066251c6c503d7e463c7390360c94f44bb4c693e5f941d2439f18b12c7a88157c5ebeae2c7cbfc85e55209b7a6184a8544ffae669f9cbe9cdb52246a090e87d875f092df5956c41d28b05b44cfcf0a5af9d157d0f36c4db83a18dd51dc919e72b8d0e7b0bbc59552fb889d8cc8cf5c4ac28bcef16f61c4fed5e59ee707f559d1768755826e9949d627b770c0f85e38e9e80ee70ea0ba5f0e5b64c90090abeeb2b4a59c6b9adb17ab073d2551f7841c964bf191dd7d21260bdaa9da80e79bf3f2787cfe87014a6387d04df6d0100';
+        expect(resultPmt.hex).to.be.eq(expectedPMT);
+    });
+
+    // Pegout: https://mempool.space/testnet/tx/ce0126ed272924b872f3b221ffd854fa986f3afacc1e95f72353ed7cd19748f4
+    // registerBtcTransaction: https://explorer.testnet.rootstock.io/tx/0x9942a24398e56cf43b7ac755dead057fe0fcd459ebe1ac61f1609be40bb7de69
+    it('should create a valid pmt with target transaction with witness pegout using real testnet block data', async () => {
+        const transactionsClient = createTransactionsClientMock(btcTestnetBlockWithTargetWitnessTx.transactions);
+        const result = await fetchBlockWtxidsWithTargetWtxid(
+            transactionsClient,
+            btcTestnetBlockWithTargetWitnessTx.blockTxids,
+            btcTestnetBlockWithTargetWitnessTx.targetTxid
+        );
+        const resultPmt = pmtBuilder.buildPMT(result.blockWtxids, result.targetWtxid);
+        const expectedPMT =
+            '0300000003000000000000000000000000000000000000000000000000000000000000000034f56b77f0537fd887993e34d04fb7a9d7c5a849e9e212bf7167afbdd1f2ba517620769b03889beb0416f39a0b68479835ab8eec55d02b4c84d7bff9cee6032b010b';
+        expect(resultPmt.hex).to.be.eq(expectedPMT);
     });
 });
