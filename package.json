@@ -18,7 +18,7 @@
   "homepage": "https://www.rsk.co",
   "dependencies": {
     "chai": "4.3.4",
-    "mocha": "10.8.2"
+    "mocha": "11.7.5"
   },
   "types": "./index.d.ts",
   "devDependencies": {
