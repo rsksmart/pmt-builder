@@ -22,7 +22,7 @@
   },
   "types": "./index.d.ts",
   "devDependencies": {
-    "@mempool/mempool.js": "2.3.0",
+    "@mempool/mempool.js": "3.0.0",
     "bitcoinjs-lib": "6.1.7",
     "merkle-lib": "2.0.10"
   }
