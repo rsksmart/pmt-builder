@@ -80,8 +80,8 @@ const getInformationReadyForRegisterCoinbaseBtcTransaction = async (network, txH
     const hashesWithWitness = txs.map( x => Buffer.from(x.getHash(true)));
     const witnessMerkleTree = merkleLib(hashesWithWitness, bitcoinJs.crypto.hash256);
     // Last element is the root; reverse for registerCoinbase byte order (same as Buffer-based merkle-lib output).
-    const witnessMerkleRootBuf = Buffer.from(witnessMerkleTree[witnessMerkleTree.length - 1]);
-    witnessMerkleRootBuf.reverse();
+    const witnessMerkleRootBuffer = Buffer.from(witnessMerkleTree[witnessMerkleTree.length - 1]);
+    witnessMerkleRootBuffer.reverse();
 
     const {hex: coinbasePmt} = pmtBuilder.buildPMT(blockTxids, coinbaseTxHashWithoutWitness);
 
@@ -89,7 +89,7 @@ const getInformationReadyForRegisterCoinbaseBtcTransaction = async (network, txH
         btcTxSerialized: `0x${coinbaseTxWithoutWitness.toHex()}`,
         btcBlockHash: `0x${blockHash}`,
         pmtSerialized: `0x${coinbasePmt}`,
-        witnessMerkleRoot: `0x${witnessMerkleRootBuf.toString('hex')}`,
+        witnessMerkleRoot: `0x${witnessMerkleRootBuffer.toString('hex')}`,
         witnessReservedValue: `0x${witnessReservedValue}`,
     };
 };
