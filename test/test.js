@@ -1,4 +1,3 @@
-const expect = require('chai').expect;
 const pmtBuilder = require('../index');
 const txs3000 = require('./resources/3000-txs');
 const blockWithTargetWitnessTx = require('./resources/btc-block-944725.json');
@@ -6,6 +5,13 @@ const blockWithNonWitnessTargetTx = require('./resources/btc-block-919405.json')
 const btcTestnetBlockWithTargetWitnessTx = require('./resources/btc-testnet-block-4894944.json');
 const btcTestnetBlockWithNonWitnessTargetTx = require('./resources/btc-testnet-block-4706672.json');
 const { fetchBlockWtxidsWithTargetWtxid } = require('../tool/pmt-builder-utils');
+
+let expect;
+
+before(async function loadChai() {
+    const chai = await import('chai');
+    expect = chai.expect;
+});
 
 describe('buildPMT using non-witness target transaction', () => {
     it('should create a valid PMT, block with a single transaction', () => {

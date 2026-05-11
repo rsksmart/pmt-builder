@@ -16,6 +16,9 @@
     "url": "https://github.com/rsksmart/pmt-builder/issues"
   },
   "homepage": "https://www.rsk.co",
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
     "chai": "6.2.2",
     "mocha": "11.7.5"
@@ -23,7 +26,7 @@
   "types": "./index.d.ts",
   "devDependencies": {
     "@mempool/mempool.js": "2.3.0",
-    "bitcoinjs-lib": "6.1.7",
+    "bitcoinjs-lib": "7.0.0",
     "merkle-lib": "2.0.10"
   }
 }
