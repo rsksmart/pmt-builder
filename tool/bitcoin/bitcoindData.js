@@ -1,4 +1,6 @@
-const { bitcoindRpc } = require('./bitcoindRpc');
+const bitcoinJs = require('bitcoinjs-lib');
+const { createBitcoindBitcoinClients } = require('./bitcoindBitcoinClients');
+const { getBlockInfoByTransactionHash } = require('../pmt-builder-utils');
 
 /**
  * Loads tx + block data from a local Bitcoin Core node (regtest / any network
@@ -9,24 +11,13 @@ const { bitcoindRpc } = require('./bitcoindRpc');
  * @returns {Promise<{ rawHex: string, blockHeight: number, blockTxids: string[] }>}
  */
 async function getBitcoinTransactionDataForPmtFromBitcoind(transactionHash) {
-    const verboseTx = await bitcoindRpc('getrawtransaction', [transactionHash, true]);
-
-    const blockHash = verboseTx.blockhash;
-    if (!blockHash) {
-        throw new Error(
-            'Transaction has no blockhash (unconfirmed?). Confirm the tx or enable txindex for getrawtransaction.'
-        );
-    }
-
-    const block = await bitcoindRpc('getblock', [blockHash, 1]);
-    const blockHeight = block.height;
-    const blockTxids = block.tx;
-
-    const rawHex =
-        typeof verboseTx.hex === 'string' && verboseTx.hex.length > 0
-            ? verboseTx.hex
-            : await bitcoindRpc('getrawtransaction', [transactionHash, false]);
-
+    const { blocks, transactions } = createBitcoindBitcoinClients();
+    const { blockHeight, blockTxids } = await getBlockInfoByTransactionHash(
+        blocks,
+        transactions,
+        transactionHash,
+    );
+    const rawHex = await transactions.getTxHex({ txid: transactionHash });
     return {
         rawHex,
         blockHeight,
@@ -34,4 +25,28 @@ async function getBitcoinTransactionDataForPmtFromBitcoind(transactionHash) {
     };
 }
 
-module.exports = { getBitcoinTransactionDataForPmtFromBitcoind };
+/**
+ * Loads decoded txs for the given txids in order (e.g. non-coinbase txs in a block).
+ * Reuses `transactions` from {@link createBitcoindBitcoinClients} so callers share one client.
+ *
+ * @param {{ getTxHex: function }} transactions - bitcoind client `transactions`
+ * @param {string[]} txids
+ * @param {(current: number, total: number) => void} [onProgress]
+ * @returns {Promise<bitcoinJs.Transaction[]>}
+ */
+async function getTransactionsFromBitcoindForTxids(transactions, txids, onProgress) {
+    const txs = [];
+    for (let i = 0; i < txids.length; i++) {
+        if (onProgress) {
+            onProgress(i + 1, txids.length);
+        }
+        const hex = await transactions.getTxHex({ txid: txids[i] });
+        txs.push(bitcoinJs.Transaction.fromHex(hex));
+    }
+    return txs;
+}
+
+module.exports = {
+    getBitcoinTransactionDataForPmtFromBitcoind,
+    getTransactionsFromBitcoindForTxids,
+};

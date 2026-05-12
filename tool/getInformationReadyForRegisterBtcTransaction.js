@@ -1,17 +1,16 @@
-const path = require("path");
-require("dotenv").config({
-    path: path.join(__dirname, "..", ".env"),
+const path = require('path');
+require('dotenv').config({
+    path: path.join(__dirname, '..', '.env'),
     quiet: true,
 });
 
-const pmtBuilder = require("../index");
-const bitcoin = require("bitcoinjs-lib");
-const { createMempoolBitcoinClients } = require("./mempool-api-client");
-const { fetchBlockWtxidsWithTargetWtxid } = require("./pmt-builder-utils");
-const { getBitcoinTransactionDataForPmt } = require("./bitcoin/transactionDataForPmt");
-const { bitcoindRpc } = require("./bitcoin/bitcoindRpc");
-
-const MEMPOOL_NETWORKS = new Set(["mainnet", "testnet"]);
+const pmtBuilder = require('../index');
+const bitcoin = require('bitcoinjs-lib');
+const { createMempoolBitcoinClients } = require('./mempool-api-client');
+const { createBitcoindBitcoinClients } = require('./bitcoin/bitcoindBitcoinClients');
+const { fetchBlockWtxidsWithTargetWtxid } = require('./pmt-builder-utils');
+const { getBitcoinTransactionDataForPmt } = require('./bitcoin/transactionDataForPmt');
+const { isMempoolNetwork } = require('./bitcoin/networks');
 
 const getInformationReadyForRegisterBtcTransaction = async (network, txHash) => {
     const {
@@ -25,21 +24,11 @@ const getInformationReadyForRegisterBtcTransaction = async (network, txHash) => 
 
     let resultPmt;
     if (hasWitness) {
-        let transactionsClient;
-        if (MEMPOOL_NETWORKS.has(network)) {
-            const { transactions } = createMempoolBitcoinClients(network);
-            transactionsClient = transactions;
-        } else if (network === "regtest") {
-            transactionsClient = {
-                getTxHex: ({ txid }) => bitcoindRpc("getrawtransaction", [txid, false]),
-            };
-        } else {
-            throw new Error(
-                `Witness transactions are not supported for network "${network}".`,
-            );
-        }
+        const { transactions } = isMempoolNetwork(network)
+            ? createMempoolBitcoinClients(network)
+            : createBitcoindBitcoinClients();
         const { blockWtxids, targetWtxid } = await fetchBlockWtxidsWithTargetWtxid(
-            transactionsClient,
+            transactions,
             blockTxids,
             txHash,
         );
@@ -66,7 +55,7 @@ const getInformationReadyForRegisterBtcTransaction = async (network, txHash) => 
             await getInformationReadyForRegisterBtcTransaction(network, txHash);
 
         console.log(
-            "Transaction Information ready for registerBtcTransaction: ",
+            'Transaction Information ready for registerBtcTransaction: ',
             informationReadyForRegisterBtcTransaction,
         );
     } catch (e) {

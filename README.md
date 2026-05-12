@@ -80,7 +80,7 @@ The Bridge `registerBtcTransaction` method receives 3 parameters: `tx`, the raw 
 
 To ease the process of registering a pegin btc transaction, the function `getInformationReadyForRegisterBtcTransaction` gets these values for you, given a bitcoin network name (`mainnet`, `testnet`, or `regtest`) and a btc transaction hash, ready to be sent to the Bridge `registerBtcTransaction` method without further setup.
 
-For **mainnet** and **testnet**, transaction and block data are fetched from the [Mempool Space](https://mempool.space) public REST API (no extra configuration).
+For **mainnet** and **testnet**, transaction and block data are fetched from the [Mempool Space](https://mempool.space) public REST API (no extra configuration). Those requests use retry with exponential backoff on HTTP 429; if retries are exhausted, the tool **throws** (it does not return partial/null payloads).
 
 For **regtest**, data is read from a local [Bitcoin Core](https://bitcoincore.org/) node over JSON-RPC. The tool uses `BITCOIND_RPC_URL` (and optional `BITCOIND_RPC_USER` / `BITCOIND_RPC_PASSWORD`) so you can point at your node’s host, port, and credentials—whether that is regtest on a non-default port or another setup that still speaks Bitcoin Core JSON-RPC.
 
@@ -99,6 +99,8 @@ The confirming transaction must be visible to `getrawtransaction` (typically ena
 This is how to use it:
 
 `node tool/getInformationReadyForRegisterBtcTransaction.js <network> <btcTransactionHash>`
+
+**CLI argument order:** `<network>` first (`mainnet`, `testnet`, or `regtest`), then the Bitcoin **txid** (hex). If you have older scripts that passed the txid before the network name, update them to match this order.
 
 For example (testnet):
 
@@ -132,23 +134,25 @@ To check if it has been successfully registered, go to `Read Contract`, then cli
 
 The Bridge `registerBtcCoinbaseTransaction` method receives 5 parameters: `btcTxSerialized:`, the coinbase raw btc transaction. `btcBlockHash:`, the block hash for this transaction. `pmtSerialized:`, the Partial Merkle Tree of this transaction. `witnessMerkleRoot:`, the witness merkle root of the coinbase transaction. `witnessReservedValue:`, the witness reserved value of the coinbase transaction.
 
-To ease the process of registering a coinbase transaction, the function `getInformationReadyForRegisterCoinbaseTransaction` gets these values for you, given a bitcoin network name (`mainnet`, `testnet`, or `regtest`) and a **btc transaction hash of any transaction in the block** whose coinbase you want (the tool resolves the block, then uses that block’s coinbase), ready to be sent to the Bridge `registerBtcCoinbaseTransaction` method without further setup.
+To ease the process of registering a coinbase transaction, run `getInformationReadyForRegisterBtcCoinbaseTransaction.js` (same order as the Bridge method name `registerBtcCoinbaseTransaction`: **Btc** then **Coinbase**). It takes a bitcoin network name (`mainnet`, `testnet`, or `regtest`) and a **btc transaction hash of any transaction in the block** whose coinbase you want (the tool resolves the block, then uses that block’s coinbase), and prints values ready for the Bridge `registerBtcCoinbaseTransaction` method without further setup.
 
-For **mainnet** and **testnet**, data is fetched from the [Mempool Space](https://mempool.space) public REST API.
+For **mainnet** and **testnet**, data is fetched from the [Mempool Space](https://mempool.space) public REST API, with the same 429 retry behavior as the `registerBtcTransaction` helper (eventually **throws** if rate limits persist).
 
 For **regtest**, data is read from a local Bitcoin Core node over JSON-RPC, using the same `BITCOIND_RPC_URL`, `BITCOIND_RPC_USER`, and `BITCOIND_RPC_PASSWORD` settings as the `getInformationReadyForRegisterBtcTransaction` tool (see above: `.env` or inline env vars). The confirming transaction must be visible to `getrawtransaction` (typically `txindex=1`).
 
 This is how to use it:
 
-> node tool/getInformationReadyForRegisterCoinbaseBtcTransaction.js <network> <btcTransactionHashInBlock>
+`node tool/getInformationReadyForRegisterBtcCoinbaseTransaction.js <network> <btcTransactionHashInBlock>`
+
+**CLI argument order:** `<network>` first, then a **txid of any confirmed transaction in the target block** (the tool loads that block’s coinbase). Same ordering as the `registerBtcTransaction` helper above.
 
 For example (mainnet):
 
-> node tool/getInformationReadyForRegisterCoinbaseBtcTransaction.js mainnet a3e666b1c03153d6eb857f3bca256a9c4515650b2d364507c5c422b56e01da1e
+> node tool/getInformationReadyForRegisterBtcCoinbaseTransaction.js mainnet a3e666b1c03153d6eb857f3bca256a9c4515650b2d364507c5c422b56e01da1e
 
 Regtest example (RPC on default regtest port; adjust URL and credentials as needed):
 
-> BITCOIND_RPC_URL=http://127.0.0.1:18443 BITCOIND_RPC_USER=rsk BITCOIND_RPC_PASSWORD=rsk node tool/getInformationReadyForRegisterCoinbaseBtcTransaction.js regtest <btcTransactionHashInBlock>
+> BITCOIND_RPC_URL=http://127.0.0.1:18443 BITCOIND_RPC_USER=rsk BITCOIND_RPC_PASSWORD=rsk node tool/getInformationReadyForRegisterBtcCoinbaseTransaction.js regtest <btcTransactionHashInBlock>
 
 It will return the following:
 

@@ -54,38 +54,48 @@ function sleep(ms = REQUEST_DELAY_MS) {
 };
 
 /**
- * Fetches transaction details with retry logic in case of rate limiting errors.
+ * Runs an async Mempool HTTP call with 429 / "Too Many Requests" exponential backoff.
  *
- * This function attempts to retrieve transaction details for a given transaction ID
- * using the specified transaction API. If a rate-limiting error is encountered
- * (e.g., HTTP 429 status or related error messages), it retries the request with
- * exponential backoff until the maximum retry attempts are exhausted.
- *
- * @param {Object} transactionsClient - Client instance used to fetch transaction data (must provide `getTxHex`).
- * @param {string} txId - The transaction ID for which details need to be fetched.
- * @param {number} [retries=0] - The current retry attempt count. Defaults to 0.
- * @returns {Promise<Object|null>} - A promise that resolves to the transaction details if
- * the operation is successful, or `null` if all retries fail or an unexpected error occurs.
- * @throws {Error} - If the function encounters an unrecoverable error other than rate limiting.
+ * @template T
+ * @param {() => Promise<T>} fn
+ * @param {string} describe - Log label when rate limited
+ * @param {number} [retries=0]
+ * @returns {Promise<T>}
  */
-const getTransactionWithRetry = async (transactionsClient, txId, retries = 0) => {
+const withMempool429Retry = async (fn, describe, retries = 0) => {
     try {
-        return await transactionsClient.getTxHex({txid: txId});
+        return await fn();
     } catch (error) {
-        // Mempool HTTP client may attach response.status for rate limits (429)
         const isRateLimitError = error.response && error.response.status === TOO_MANY_REQUESTS_ERROR_CODE;
-
-        // Sometimes the error message might contain clues if status code is not too many requests error code (429)
         const isMempoolSpecificRateLimit = error.message && error.message.includes('Too Many Requests');
 
         if ((isRateLimitError || isMempoolSpecificRateLimit) && retries < MAX_RETRIES) {
-            const delay = RETRY_DELAY_FACTOR_MS * Math.pow(2, retries); // Exponential backoff
-            console.warn(`Rate limit hit for ${txId}. Retrying in ${delay / 1000} seconds... (Attempt ${retries + 1}/${MAX_RETRIES})`);
+            const delay = RETRY_DELAY_FACTOR_MS * Math.pow(2, retries);
+            console.warn(`Rate limit hit for ${describe}. Retrying in ${delay / 1000} seconds... (Attempt ${retries + 1}/${MAX_RETRIES})`);
             await sleep(delay);
-            return getTransactionWithRetry(transactionsClient, txId, retries + 1);
+            return withMempool429Retry(fn, describe, retries + 1);
         }
 
-        throw new Error(`Failed to fetch transaction details for txId: ${txId} after ${retries} retries. Error: ${error.message}`);
+        throw error;
+    }
+};
+
+/**
+ * Fetches raw transaction hex with retry logic for Mempool HTTP 429 / "Too Many Requests".
+ *
+ * @param {Object} transactionsClient - Client instance used to fetch transaction data (must provide `getTxHex`).
+ * @param {string} txId - The transaction ID for which details need to be fetched.
+ * @returns {Promise<string>}
+ * @throws {Error} - If the function encounters an unrecoverable error or exhausts retries.
+ */
+const getTransactionWithRetry = async (transactionsClient, txId) => {
+    try {
+        return await withMempool429Retry(
+            () => transactionsClient.getTxHex({ txid: txId }),
+            `getTxHex ${txId}`,
+        );
+    } catch (error) {
+        throw new Error(`Failed to fetch transaction details for txId: ${txId}. Error: ${error.message}`);
     }
 };
 
@@ -127,6 +137,11 @@ const getBlockWtxidsWithTargetWtxidByTransactionHash = async (blocksClient, tran
  */
 const getBlockInfoByTransactionHash = async (blocksClient, transactionsClient, txHash) => {
     const transaction = await transactionsClient.getTx({ txid: txHash });
+    if (!transaction.status || !transaction.status.block_hash || transaction.status.block_height == null) {
+        throw new Error(
+            `Transaction ${txHash} is not confirmed (missing block in API response). Wait for confirmations or check the txid.`,
+        );
+    }
     const blockHash = transaction.status.block_hash;
     const blockTxids = await blocksClient.getBlockTxids({ hash: blockHash });
     const blockHeight = transaction.status.block_height;
@@ -138,4 +153,13 @@ const getBlockInfoByTransactionHash = async (blocksClient, transactionsClient, t
     };
 };
 
-module.exports = { fetchBlockWtxidsWithTargetWtxid, sleep, getTransactionWithRetry, getBlockTxidsByTransactionHash, getBlockWtxidsWithTargetWtxidByTransactionHash, getBlockInfoByTransactionHash, REQUEST_DELAY_MS };
+module.exports = {
+    fetchBlockWtxidsWithTargetWtxid,
+    sleep,
+    getTransactionWithRetry,
+    withMempool429Retry,
+    getBlockTxidsByTransactionHash,
+    getBlockWtxidsWithTargetWtxidByTransactionHash,
+    getBlockInfoByTransactionHash,
+    REQUEST_DELAY_MS,
+};

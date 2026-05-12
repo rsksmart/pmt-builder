@@ -1,7 +1,6 @@
 const { getBitcoinTransactionDataForPmtFromMempool } = require('./mempoolData');
 const { getBitcoinTransactionDataForPmtFromBitcoind } = require('./bitcoindData');
-
-const MEMPOOL_NETWORKS = new Set(['mainnet', 'testnet']);
+const { isMempoolNetwork } = require('./networks');
 
 /**
  * Fetches raw hex, confirming block height, and ordered txids in that block.
@@ -15,11 +14,11 @@ async function getBitcoinTransactionDataForPmt(transactionHash, network) {
     if (network === 'regtest') {
         return getBitcoinTransactionDataForPmtFromBitcoind(transactionHash);
     }
-    if (MEMPOOL_NETWORKS.has(network)) {
+    if (isMempoolNetwork(network)) {
         return getBitcoinTransactionDataForPmtFromMempool(transactionHash, network);
     }
     throw new Error(
-        `Unsupported network "${network}". Use mainnet, testnet, or regtest.`
+        `Unsupported network "${network}". Use mainnet, testnet, or regtest.`,
     );
 }
 
