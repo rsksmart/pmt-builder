@@ -132,15 +132,23 @@ To check if it has been successfully registered, go to `Read Contract`, then cli
 
 The Bridge `registerBtcCoinbaseTransaction` method receives 5 parameters: `btcTxSerialized:`, the coinbase raw btc transaction. `btcBlockHash:`, the block hash for this transaction. `pmtSerialized:`, the Partial Merkle Tree of this transaction. `witnessMerkleRoot:`, the witness merkle root of the coinbase transaction. `witnessReservedValue:`, the witness reserved value of the coinbase transaction.
 
-To ease the process of registering a coinbase transaction, the function `getInformationReadyForRegisterCoinbaseTransaction` gets these values for you, given a bitcoin network name (testnet, mainnet) and a btc transaction hash, ready to be sent to the Bridge `registerBtcCoinbaseTransaction` method without further setup.
+To ease the process of registering a coinbase transaction, the function `getInformationReadyForRegisterCoinbaseTransaction` gets these values for you, given a bitcoin network name (`mainnet`, `testnet`, or `regtest`) and a **btc transaction hash of any transaction in the block** whose coinbase you want (the tool resolves the block, then uses that block’s coinbase), ready to be sent to the Bridge `registerBtcCoinbaseTransaction` method without further setup.
+
+For **mainnet** and **testnet**, data is fetched from the [Mempool Space](https://mempool.space) public REST API.
+
+For **regtest**, data is read from a local Bitcoin Core node over JSON-RPC, using the same `BITCOIND_RPC_URL`, `BITCOIND_RPC_USER`, and `BITCOIND_RPC_PASSWORD` settings as the `getInformationReadyForRegisterBtcTransaction` tool (see above: `.env` or inline env vars). The confirming transaction must be visible to `getrawtransaction` (typically `txindex=1`).
 
 This is how to use it:
 
-> node tool/getInformationReadyForRegisterCoinbaseBtcTransaction.js <network> <btcCoinbaseTransactionHash>
+> node tool/getInformationReadyForRegisterCoinbaseBtcTransaction.js <network> <btcTransactionHashInBlock>
 
-For example:
+For example (mainnet):
 
 > node tool/getInformationReadyForRegisterCoinbaseBtcTransaction.js mainnet a3e666b1c03153d6eb857f3bca256a9c4515650b2d364507c5c422b56e01da1e
+
+Regtest example (RPC on default regtest port; adjust URL and credentials as needed):
+
+> BITCOIND_RPC_URL=http://127.0.0.1:18443 BITCOIND_RPC_USER=rsk BITCOIND_RPC_PASSWORD=rsk node tool/getInformationReadyForRegisterCoinbaseBtcTransaction.js regtest <btcTransactionHashInBlock>
 
 It will return the following:
 
