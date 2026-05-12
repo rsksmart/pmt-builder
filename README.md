@@ -90,7 +90,7 @@ If you will use regtest or a non-default RPC endpoint, set `BITCOIND_RPC_URL` an
 
 **Option B — inline (one-off):** Set variables on the same line as `node`, for example:
 
-`BITCOIND_RPC_URL=http://127.0.0.1:18443 BITCOIND_RPC_USER=test BITCOIND_RPC_PASSWORD=test node tool/getInformationReadyForRegisterBtcTransaction.js regtest <btcTransactionHash>`
+`BITCOIND_RPC_URL=http://127.0.0.1:18444 BITCOIND_RPC_USER=test BITCOIND_RPC_PASSWORD=test node tool/getInformationReadyForRegisterBtcTransaction.js regtest <btcTransactionHash>`
 
 Inline variables override anything set in `.env` for that process.
 
@@ -150,9 +150,9 @@ For example (mainnet):
 
 > node tool/getInformationReadyForRegisterBtcCoinbaseTransaction.js mainnet a3e666b1c03153d6eb857f3bca256a9c4515650b2d364507c5c422b56e01da1e
 
-Regtest example (RPC on default regtest port; adjust URL and credentials as needed):
+Regtest example (default URL/port in code and `.env.example` is `127.0.0.1:18444`; set `BITCOIND_RPC_URL` if your node differs):
 
-> BITCOIND_RPC_URL=http://127.0.0.1:18443 BITCOIND_RPC_USER=rsk BITCOIND_RPC_PASSWORD=rsk node tool/getInformationReadyForRegisterBtcCoinbaseTransaction.js regtest <btcTransactionHashInBlock>
+> BITCOIND_RPC_URL=http://127.0.0.1:18444 BITCOIND_RPC_USER=rsk BITCOIND_RPC_PASSWORD=rsk node tool/getInformationReadyForRegisterBtcCoinbaseTransaction.js regtest <btcTransactionHashInBlock>
 
 It will return the following:
 
