@@ -116,7 +116,7 @@ const getInformationReadyForRegisterBtcCoinbaseTransactionFromBitcoind = async (
     const { blockHash, blockTxids } = await getBlockInfoByTransactionHash(blocks, transactions, txHash);
 
     const coinbaseTxId = blockTxids[0];
-    const rawCoinbaseBtcTx = await getTransactionWithRetry(transactions, coinbaseTxId);
+    const rawCoinbaseBtcTx = await transactions.getTxHex({ txid: coinbaseTxId });
     const coinbaseTx = bitcoinJs.Transaction.fromHex(rawCoinbaseBtcTx);
 
     const restIds = blockTxids.slice(1);

@@ -136,14 +136,20 @@ const getBlockWtxidsWithTargetWtxidByTransactionHash = async (blocksClient, tran
  * @returns {Promise<{blockHash: string, blockHeight: number, blockTxids: string[]}>} - A promise that resolves to an object containing the block hash, block height, and transaction IDs in the same block.
  */
 const getBlockInfoByTransactionHash = async (blocksClient, transactionsClient, txHash) => {
-    const transaction = await transactionsClient.getTx({ txid: txHash });
+    const transaction = await withMempool429Retry(
+        () => transactionsClient.getTx({ txid: txHash }),
+        `getTx ${txHash}`,
+    );
     if (!transaction.status || !transaction.status.block_hash || transaction.status.block_height == null) {
         throw new Error(
             `Transaction ${txHash} is not confirmed (missing block in API response). Wait for confirmations or check the txid.`,
         );
     }
     const blockHash = transaction.status.block_hash;
-    const blockTxids = await blocksClient.getBlockTxids({ hash: blockHash });
+    const blockTxids = await withMempool429Retry(
+        () => blocksClient.getBlockTxids({ hash: blockHash }),
+        `getBlockTxids ${blockHash}`,
+    );
     const blockHeight = transaction.status.block_height;
 
     return {
