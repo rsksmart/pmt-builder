@@ -8,7 +8,7 @@ const pmtBuilder = require("../index");
 const bitcoin = require("bitcoinjs-lib");
 const { createMempoolBitcoinClients } = require("./mempool-api-client");
 const { fetchBlockWtxidsWithTargetWtxid } = require("./pmt-builder-utils");
-const { getBitcoinTransactionDataForPmt } = require("./bitcoin/bitcoinTransactionDataForPmt");
+const { getBitcoinTransactionDataForPmt } = require("./bitcoin/transactionDataForPmt");
 const { bitcoindRpc } = require("./bitcoin/bitcoindRpc");
 
 const MEMPOOL_NETWORKS = new Set(["mainnet", "testnet"]);

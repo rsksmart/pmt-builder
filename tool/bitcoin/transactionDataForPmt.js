@@ -1,5 +1,5 @@
-const { getBitcoinTransactionDataForPmtFromMempool } = require('./bitcoinMempoolData');
-const { getBitcoinTransactionDataForPmtFromBitcoind } = require('./bitcoinBitcoindData');
+const { getBitcoinTransactionDataForPmtFromMempool } = require('./mempoolData');
+const { getBitcoinTransactionDataForPmtFromBitcoind } = require('./bitcoindData');
 
 const MEMPOOL_NETWORKS = new Set(['mainnet', 'testnet']);
 
