@@ -1,13 +1,10 @@
-const mempoolJS = require("@mempool/mempool.js");
 const pmtBuilder = require("../index");
 const bitcoin = require('bitcoinjs-lib');
+const { createMempoolBitcoinClients } = require("./mempool-api-client");
 const { fetchBlockWtxidsWithTargetWtxid, getTransactionWithRetry, getBlockInfoByTransactionHash } = require("./pmt-builder-utils");
 
 const getInformationReadyForRegisterBtcTransaction = async (network, txHash) => {
-    const { bitcoin: { blocks, transactions } } = mempoolJS({
-        hostname: 'mempool.space',
-        network // 'testnet' | 'mainnet'
-    });
+    const { blocks, transactions } = createMempoolBitcoinClients(network);
 
     const { blockHeight, blockTxids } = await getBlockInfoByTransactionHash(blocks, transactions, txHash);
     const rawTargetBtcTransaction = await getTransactionWithRetry(transactions, txHash);

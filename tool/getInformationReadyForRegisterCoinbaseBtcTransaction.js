@@ -1,6 +1,6 @@
 const bitcoinJs = require('bitcoinjs-lib');
 const merkleLib = require('merkle-lib');
-const mempoolJS = require("@mempool/mempool.js");
+const { createMempoolBitcoinClients } = require("./mempool-api-client");
 const { sleep, getTransactionWithRetry, getBlockInfoByTransactionHash, REQUEST_DELAY_MS } = require("./pmt-builder-utils");
 const pmtBuilder = require("../index");
 
@@ -58,10 +58,7 @@ const getAllTxs = async (transactionsClient, txIds) => {
 };
 
 const getInformationReadyForRegisterCoinbaseBtcTransaction = async (network, txHash) => {
-    const { bitcoin: { blocks, transactions } } = mempoolJS({
-        hostname: 'mempool.space',
-        network // 'testnet' | 'mainnet'
-    });
+    const { blocks, transactions } = createMempoolBitcoinClients(network);
 
     const { blockHash, blockTxids } = await getBlockInfoByTransactionHash(blocks, transactions, txHash);
 
