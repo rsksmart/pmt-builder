@@ -39,8 +39,9 @@ const fetchBlockWtxidsWithTargetWtxid = async (transactionsClient, blockTxids, t
 const getWtxid = async (transactionsClient, txid) => {
     const rawTx = await getTransactionWithRetry(transactionsClient, txid);
     const tx = bitcoin.Transaction.fromHex(rawTx);
-    const wtxid = tx.getHash(true).reverse().toString('hex');
-    return wtxid;
+    const hashBytes = Buffer.from(tx.getHash(true));
+    hashBytes.reverse();
+    return hashBytes.toString('hex');
 };
 
 /**

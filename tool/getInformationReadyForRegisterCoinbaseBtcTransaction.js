@@ -69,18 +69,19 @@ const getInformationReadyForRegisterCoinbaseBtcTransaction = async (network, txH
     const rawCoinbaseBtcTx = await getTransactionWithRetry(transactions, coinbaseTxId);
     const coinbaseTx = bitcoinJs.Transaction.fromHex(rawCoinbaseBtcTx);
 
-    // Hack to get the coinbase transaction hash without witness data
-    const coinbaseTxWithoutWitness = bitcoinJs.Transaction.fromBuffer(coinbaseTx.__toBuffer(undefined, undefined, false));
-    const coinbaseTxHashWithoutWitness = coinbaseTxWithoutWitness.getId();
+    const witnessReservedValue = Buffer.from(coinbaseTx.ins[0].witness[0]).toString('hex');
 
-    const witnessReservedValue = coinbaseTx.ins[0].witness[0].toString('hex');
+    const coinbaseTxWithoutWitness = coinbaseTx.clone();
+    coinbaseTxWithoutWitness.stripWitnesses();
+    const coinbaseTxHashWithoutWitness = coinbaseTxWithoutWitness.getId();
     const txs = await getAllTxs(transactions, blockTxids);
 
     // Calculate witnessRoot
     const hashesWithWitness = txs.map( x => Buffer.from(x.getHash(true)));
     const witnessMerkleTree = merkleLib(hashesWithWitness, bitcoinJs.crypto.hash256);
-    // Get witness merkleRoot from witnessMerkleTree. This is equal to the last element in witnessMerkleTree array
-    const witnessMerkleRoot = witnessMerkleTree[witnessMerkleTree.length-1].reverse();
+    // Last element is the root; reverse for registerCoinbase byte order (same as Buffer-based merkle-lib output).
+    const witnessMerkleRootBuffer = Buffer.from(witnessMerkleTree[witnessMerkleTree.length - 1]);
+    witnessMerkleRootBuffer.reverse();
 
     const {hex: coinbasePmt} = pmtBuilder.buildPMT(blockTxids, coinbaseTxHashWithoutWitness);
 
@@ -88,7 +89,7 @@ const getInformationReadyForRegisterCoinbaseBtcTransaction = async (network, txH
         btcTxSerialized: `0x${coinbaseTxWithoutWitness.toHex()}`,
         btcBlockHash: `0x${blockHash}`,
         pmtSerialized: `0x${coinbasePmt}`,
-        witnessMerkleRoot: `0x${witnessMerkleRoot.toString('hex')}`,
+        witnessMerkleRoot: `0x${witnessMerkleRootBuffer.toString('hex')}`,
         witnessReservedValue: `0x${witnessReservedValue}`,
     };
 };
