@@ -18,7 +18,7 @@ const {
     getBlockHashAndTxidsForConfirmedTx,
     getRawTransactionHex,
     getBlockTransactionsFromBitcoind,
-} = require("./lib/bitcoinCoinbaseDataFromBitcoind");
+} = require("./bitcoin/bitcoinCoinbaseDataFromBitcoind");
 
 function updateProgress(currentIndex, totalCount) {
     process.stdout.write(`Fetching transactions: ${currentIndex}/${totalCount}\r`);
