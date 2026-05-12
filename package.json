@@ -25,7 +25,7 @@
   },
   "types": "./index.d.ts",
   "devDependencies": {
-    "bitcoinjs-lib": "7.0.0",
+    "bitcoinjs-lib": "7.0.1",
     "merkle-lib": "2.0.10"
   }
 }
