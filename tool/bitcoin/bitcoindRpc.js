@@ -1,6 +1,6 @@
 /**
  * Minimal Bitcoin Core JSON-RPC client (HTTP POST).
- * Configure via BITCOIND_RPC_URL (default http://127.0.0.1:18444) and
+ * Configure via BITCOIND_RPC_URL (default http://127.0.0.1:18443, Bitcoin Core regtest JSON-RPC; 18444 is the default regtest P2P port) and
  * BITCOIND_RPC_USER / BITCOIND_RPC_PASSWORD.
  */
 
@@ -14,7 +14,7 @@ const RPC_GETRAWTRANSACTION_HEX = false;
 const RPC_GETBLOCK_TXID_LIST = 1;
 
 async function bitcoindRpc(method, params = []) {
-    const url = process.env.BITCOIND_RPC_URL || 'http://127.0.0.1:18444';
+    const url = process.env.BITCOIND_RPC_URL || 'http://127.0.0.1:18443';
     const user = process.env.BITCOIND_RPC_USER || '';
     const password = process.env.BITCOIND_RPC_PASSWORD || '';
 
