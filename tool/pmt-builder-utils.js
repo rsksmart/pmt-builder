@@ -133,16 +133,18 @@ const getBlockWtxidsWithTargetWtxidByTransactionHash = async (blocksClient, tran
  * @param {Object} blocksClient - The blocks client instance used to interact with the blockchain.
  * @param {Object} transactionsClient - The transactions client instance used to interact with the blockchain.
  * @param {string} txHash - The transaction hash for which to find the block information.
+ * @param {{ unconfirmedBlockDetail?: string }} [options] - Optional phrase inserted after "missing block " in the unconfirmed error (default: "in API response").
  * @returns {Promise<{blockHash: string, blockHeight: number, blockTxids: string[]}>} - A promise that resolves to an object containing the block hash, block height, and transaction IDs in the same block.
  */
-const getBlockInfoByTransactionHash = async (blocksClient, transactionsClient, txHash) => {
+const getBlockInfoByTransactionHash = async (blocksClient, transactionsClient, txHash, options = {}) => {
+    const unconfirmedBlockDetail = options.unconfirmedBlockDetail ?? 'in API response';
     const transaction = await withMempool429Retry(
         () => transactionsClient.getTx({ txid: txHash }),
         `getTx ${txHash}`,
     );
     if (!transaction.status || !transaction.status.block_hash || transaction.status.block_height == null) {
         throw new Error(
-            `Transaction ${txHash} is not confirmed (missing block in API response). Wait for confirmations or check the txid.`,
+            `Transaction ${txHash} is not confirmed (missing block ${unconfirmedBlockDetail}). Wait for confirmations or check the txid.`,
         );
     }
     const blockHash = transaction.status.block_hash;

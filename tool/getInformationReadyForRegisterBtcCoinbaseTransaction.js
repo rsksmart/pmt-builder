@@ -81,7 +81,14 @@ const buildRegisterCoinbaseResult = (blockHash, blockTxids, coinbaseTx, txs) => 
     coinbaseTxWithoutWitness.stripWitnesses();
     const coinbaseTxHashWithoutWitness = coinbaseTxWithoutWitness.getId();
 
-    const hashesWithWitness = txs.map((x) => Buffer.from(x.getHash(true)));
+  
+    if (!txs || txs.length === 0) {
+        throw new Error('Block has no transactions for witness merkle root computation.');
+    }
+    const hashesWithWitness = [
+        Buffer.alloc(32, 0),
+        ...txs.slice(1).map((tx) => Buffer.from(tx.getHash(true))),
+    ];
     const witnessMerkleTree = merkleLib(hashesWithWitness, bitcoinJs.crypto.hash256);
     const witnessMerkleRootBuffer = Buffer.from(witnessMerkleTree[witnessMerkleTree.length - 1]);
     witnessMerkleRootBuffer.reverse();
@@ -100,20 +107,24 @@ const buildRegisterCoinbaseResult = (blockHash, blockTxids, coinbaseTx, txs) => 
 const getInformationReadyForRegisterBtcCoinbaseTransactionFromMempool = async (network, txHash) => {
     const { blocks, transactions } = createMempoolBitcoinClients(network);
 
-    const { blockHash, blockTxids } = await getBlockInfoByTransactionHash(blocks, transactions, txHash);
-
-    const coinbaseTxId = blockTxids[0];
-    const rawCoinbaseBtcTx = await getTransactionWithRetry(transactions, coinbaseTxId);
-    const coinbaseTx = bitcoinJs.Transaction.fromHex(rawCoinbaseBtcTx);
+    const { blockHash, blockTxids } = await getBlockInfoByTransactionHash(blocks, transactions, txHash, {
+        unconfirmedBlockDetail: 'in mempool.space response',
+    });
 
     const txs = await getAllTxs(transactions, blockTxids);
+    const coinbaseTx = txs[0];
+    if (!coinbaseTx) {
+        throw new Error('Block has no coinbase transaction.');
+    }
 
     return buildRegisterCoinbaseResult(blockHash, blockTxids, coinbaseTx, txs);
 };
 
 const getInformationReadyForRegisterBtcCoinbaseTransactionFromBitcoind = async (txHash) => {
     const { blocks, transactions } = createBitcoindBitcoinClients();
-    const { blockHash, blockTxids } = await getBlockInfoByTransactionHash(blocks, transactions, txHash);
+    const { blockHash, blockTxids } = await getBlockInfoByTransactionHash(blocks, transactions, txHash, {
+        unconfirmedBlockDetail: 'from Bitcoin Core (tx not confirmed, wrong network, or txindex disabled)',
+    });
 
     const coinbaseTxId = blockTxids[0];
     const rawCoinbaseBtcTx = await transactions.getTxHex({ txid: coinbaseTxId });

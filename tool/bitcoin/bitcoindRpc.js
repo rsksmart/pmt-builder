@@ -45,7 +45,7 @@ async function bitcoindRpc(method, params = []) {
     let json;
     try {
         json = responseText ? JSON.parse(responseText) : null;
-    } catch (e) {
+    } catch {
         throw new Error(
             `bitcoind RPC ${method}: response was not JSON (HTTP ${res.status}). Body starts: ${responseText.slice(0, 200)}`,
         );

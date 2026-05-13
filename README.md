@@ -71,8 +71,26 @@ For example:
 }
 ```
 
-`network`: testnet or mainnet
+`network`: testnet or mainnet  
 `txHash`: filtered transaction hash in hex format
+
+### Regtest setup
+
+Both Bridge helpers below support **`regtest`** by calling a local [Bitcoin Core](https://bitcoincore.org/) node over **JSON-RPC**. Configure this once, then run the `node` commands without exporting variables manually.
+
+1. **Create or edit `.env` in the project root.** Copy `.env.example` to `.env` if needed. Set:
+   - **`BITCOIND_RPC_URL`** — HTTP JSON-RPC base URL, e.g. `http://127.0.0.1:18443` (Bitcoin Core’s default regtest RPC port is **18443**; **18444** is the default regtest P2P port). Use whatever host/port your `rpcport` / `rpcbind` uses.
+   - **`BITCOIND_RPC_USER`** and **`BITCOIND_RPC_PASSWORD`** — must match `rpcuser` / `rpcpassword` in `bitcoin.conf` when RPC authentication is enabled. Leave both empty only if the node allows unauthenticated localhost RPC.
+2. **Bitcoin Core:** run in **regtest** and enable **`txindex=1`** in `bitcoin.conf` if you need `getrawtransaction` for arbitrary confirmed txids (not only wallet-related txs).
+3. **Run from the repo root** (after `npm install`). The scripts load `.env` with [dotenv](https://github.com/motdotla/dotenv); `.env` is gitignored.
+
+Optional: override `.env` for a single shell command by prefixing, e.g. `BITCOIND_RPC_URL=http://127.0.0.1:18332 node tool/...`.
+
+With `.env` in place, examples:
+
+`node tool/getInformationReadyForRegisterBtcTransaction.js regtest <btcTransactionHash>`
+
+`node tool/getInformationReadyForRegisterBtcCoinbaseTransaction.js regtest <btcTransactionHashInBlock>`
 
 ### Getting a pegin btc transaction information ready to register
 
@@ -82,19 +100,7 @@ To ease the process of registering a pegin btc transaction, the function `getInf
 
 For **mainnet** and **testnet**, transaction and block data are fetched from the [Mempool Space](https://mempool.space) public REST API (no extra configuration). Those requests use retry with exponential backoff on HTTP 429; if retries are exhausted, the tool **throws** (it does not return partial/null payloads).
 
-For **regtest**, data is read from a local [Bitcoin Core](https://bitcoincore.org/) node over JSON-RPC. The tool uses `BITCOIND_RPC_URL` (and optional `BITCOIND_RPC_USER` / `BITCOIND_RPC_PASSWORD`) so you can point at your node’s host, port, and credentials—whether that is regtest on a non-default port or another setup that still speaks Bitcoin Core JSON-RPC.
-
-If you will use regtest or a non-default RPC endpoint, set `BITCOIND_RPC_URL` and, if needed, `BITCOIND_RPC_USER` and `BITCOIND_RPC_PASSWORD`. See `.env.example` for descriptions.
-
-**Option A — `.env` file:** Copy `.env.example` to `.env` in the project root, edit the values, then run the `node` command below. The script loads `.env` with [dotenv](https://github.com/motdotla/dotenv) (no need to `source` or export manually). `.env` is gitignored so credentials stay local.
-
-**Option B — inline (one-off):** Set variables on the same line as `node`, for example:
-
-`BITCOIND_RPC_URL=http://127.0.0.1:18443 BITCOIND_RPC_USER=test BITCOIND_RPC_PASSWORD=test node tool/getInformationReadyForRegisterBtcTransaction.js regtest <btcTransactionHash>`
-
-Inline variables override anything set in `.env` for that process.
-
-The confirming transaction must be visible to `getrawtransaction` (typically enable `txindex=1` in `bitcoin.conf` for arbitrary confirmed txs).
+For **regtest**, see [Regtest setup](#regtest-setup) above.
 
 This is how to use it:
 
@@ -102,7 +108,7 @@ This is how to use it:
 
 **CLI argument order:** `<network>` first (`mainnet`, `testnet`, or `regtest`), then the Bitcoin **txid** (hex). If you have older scripts that passed the txid before the network name, update them to match this order.
 
-For example (testnet):
+Example (testnet):
 
 > node tool/getInformationReadyForRegisterBtcTransaction.js testnet 5cec844c7d2443175c91d39d7be0acf9e4cfc468fbfe3f3dd05c747d60c59e12
 
@@ -138,7 +144,7 @@ To ease the process of registering a coinbase transaction, run `getInformationRe
 
 For **mainnet** and **testnet**, data is fetched from the [Mempool Space](https://mempool.space) public REST API, with the same 429 retry behavior as the `registerBtcTransaction` helper (eventually **throws** if rate limits persist).
 
-For **regtest**, data is read from a local Bitcoin Core node over JSON-RPC, using the same `BITCOIND_RPC_URL`, `BITCOIND_RPC_USER`, and `BITCOIND_RPC_PASSWORD` settings as the `getInformationReadyForRegisterBtcTransaction` tool (see above: `.env` or inline env vars). The confirming transaction must be visible to `getrawtransaction` (typically `txindex=1`).
+For **regtest**, see [Regtest setup](#regtest-setup) above.
 
 This is how to use it:
 
@@ -146,13 +152,9 @@ This is how to use it:
 
 **CLI argument order:** `<network>` first, then a **txid of any confirmed transaction in the target block** (the tool loads that block’s coinbase). Same ordering as the `registerBtcTransaction` helper above.
 
-For example (mainnet):
+Example (mainnet):
 
 > node tool/getInformationReadyForRegisterBtcCoinbaseTransaction.js mainnet a3e666b1c03153d6eb857f3bca256a9c4515650b2d364507c5c422b56e01da1e
-
-Regtest example (Bitcoin Core’s default regtest RPC is `127.0.0.1:18443`; set `BITCOIND_RPC_URL` if yours differs, e.g. custom `rpcport`):
-
-> BITCOIND_RPC_URL=http://127.0.0.1:18443 BITCOIND_RPC_USER=rsk BITCOIND_RPC_PASSWORD=rsk node tool/getInformationReadyForRegisterBtcCoinbaseTransaction.js regtest <btcTransactionHashInBlock>
 
 It will return the following:
 

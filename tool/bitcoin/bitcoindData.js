@@ -16,6 +16,7 @@ async function getBitcoinTransactionDataForPmtFromBitcoind(transactionHash) {
         blocks,
         transactions,
         transactionHash,
+        { unconfirmedBlockDetail: 'from Bitcoin Core (tx not confirmed, wrong network, or txindex disabled)' },
     );
     const rawHex = await transactions.getTxHex({ txid: transactionHash });
     return {
