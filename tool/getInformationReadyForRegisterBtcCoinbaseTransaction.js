@@ -81,7 +81,6 @@ const buildRegisterCoinbaseResult = (blockHash, blockTxids, coinbaseTx, txs) => 
     coinbaseTxWithoutWitness.stripWitnesses();
     const coinbaseTxHashWithoutWitness = coinbaseTxWithoutWitness.getId();
 
-  
     if (!txs || txs.length === 0) {
         throw new Error('Block has no transactions for witness merkle root computation.');
     }
@@ -126,24 +125,19 @@ const getInformationReadyForRegisterBtcCoinbaseTransactionFromBitcoind = async (
         unconfirmedBlockDetail: 'from Bitcoin Core (tx not confirmed, wrong network, or txindex disabled)',
     });
 
-    const coinbaseTxId = blockTxids[0];
-    const rawCoinbaseBtcTx = await transactions.getTxHex({ txid: coinbaseTxId });
-    const coinbaseTx = bitcoinJs.Transaction.fromHex(rawCoinbaseBtcTx);
-
-    const restIds = blockTxids.slice(1);
     console.log(
-        `Found ${blockTxids.length} transactions. Fetching ${restIds.length} non-coinbase from local bitcoind (no delay)...`,
+        `Found ${blockTxids.length} transactions. Fetching from local bitcoind (no delay between requests)...`,
     );
-    if (blockTxids.length > 0) {
-        updateProgress(1, blockTxids.length);
-    }
-    const restTxs = await getTransactionsFromBitcoindForTxids(transactions, restIds, (cur) => {
-        updateProgress(1 + cur, blockTxids.length);
+    const txs = await getTransactionsFromBitcoindForTxids(transactions, blockTxids, (current, total) => {
+        updateProgress(current, total);
     });
     clearProgress();
     console.log(`\nFinished fetching ${blockTxids.length} transactions.`);
 
-    const txs = [coinbaseTx, ...restTxs];
+    const coinbaseTx = txs[0];
+    if (!coinbaseTx) {
+        throw new Error('Block has no coinbase transaction.');
+    }
 
     return buildRegisterCoinbaseResult(blockHash, blockTxids, coinbaseTx, txs);
 };
