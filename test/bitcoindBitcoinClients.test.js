@@ -1,4 +1,4 @@
-const { createBitcoindBitcoinClients } = require('../tool/bitcoin/bitcoindBitcoinClients');
+const { createBitcoindClients } = require('../tool/bitcoin/bitcoindBitcoinClients');
 
 let expect;
 
@@ -7,9 +7,9 @@ before(async function loadChai() {
     expect = chai.expect;
 });
 
-describe('createBitcoindBitcoinClients', () => {
+describe('createBitcoindClients', () => {
     it('returns mempool-compatible blocks and transactions clients', () => {
-        const { blocks, transactions } = createBitcoindBitcoinClients();
+        const { blocks, transactions } = createBitcoindClients();
         expect(blocks.getBlockTxids).to.be.a('function');
         expect(transactions.getTx).to.be.a('function');
         expect(transactions.getTxHex).to.be.a('function');

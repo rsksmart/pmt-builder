@@ -7,10 +7,11 @@ require('dotenv').config({
 const pmtBuilder = require('../index');
 const bitcoin = require('bitcoinjs-lib');
 const { createMempoolBitcoinClients } = require('./mempool-api-client');
-const { createBitcoindBitcoinClients } = require('./bitcoin/bitcoindBitcoinClients');
+const { createBitcoindClients } = require('./bitcoin/bitcoindBitcoinClients');
 const { fetchBlockWtxidsWithTargetWtxid } = require('./pmt-builder-utils');
 const { getBitcoinTransactionDataForPmt } = require('./bitcoin/transactionDataForPmt');
 const { isMempoolNetwork } = require('./bitcoin/networks');
+const { parseBridgeRegisterBtcCliArgs } = require('./bitcoin/registerBtcCliArgs');
 
 const getInformationReadyForRegisterBtcTransaction = async (network, txHash) => {
     const {
@@ -26,7 +27,7 @@ const getInformationReadyForRegisterBtcTransaction = async (network, txHash) => 
     if (hasWitness) {
         const { transactions } = isMempoolNetwork(network)
             ? createMempoolBitcoinClients(network)
-            : createBitcoindBitcoinClients();
+            : createBitcoindClients();
         const { blockWtxids, targetWtxid } = await fetchBlockWtxidsWithTargetWtxid(
             transactions,
             blockTxids,
@@ -48,8 +49,10 @@ const getInformationReadyForRegisterBtcTransaction = async (network, txHash) => 
 
 (async () => {
     try {
-        const network = process.argv[2];
-        const txHash = process.argv[3];
+        const { network, txHash } = parseBridgeRegisterBtcCliArgs(
+            process.argv,
+            'Usage: node tool/getInformationReadyForRegisterBtcTransaction.js <mainnet|testnet|regtest> <btcTransactionHash>',
+        );
 
         const informationReadyForRegisterBtcTransaction =
             await getInformationReadyForRegisterBtcTransaction(network, txHash);

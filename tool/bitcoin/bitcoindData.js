@@ -1,5 +1,5 @@
 const bitcoinJs = require('bitcoinjs-lib');
-const { createBitcoindBitcoinClients } = require('./bitcoindBitcoinClients');
+const { createBitcoindClients } = require('./bitcoindBitcoinClients');
 const { getBlockInfoByTransactionHash } = require('../pmt-builder-utils');
 
 /**
@@ -11,7 +11,7 @@ const { getBlockInfoByTransactionHash } = require('../pmt-builder-utils');
  * @returns {Promise<{ rawHex: string, blockHeight: number, blockTxids: string[] }>}
  */
 async function getBitcoinTransactionDataForPmtFromBitcoind(transactionHash) {
-    const { blocks, transactions } = createBitcoindBitcoinClients();
+    const { blocks, transactions } = createBitcoindClients();
     const { blockHeight, blockTxids } = await getBlockInfoByTransactionHash(
         blocks,
         transactions,
@@ -27,15 +27,15 @@ async function getBitcoinTransactionDataForPmtFromBitcoind(transactionHash) {
 }
 
 /**
- * Loads decoded txs for the given txids in order (e.g. non-coinbase txs in a block).
- * Reuses `transactions` from {@link createBitcoindBitcoinClients} so callers share one client.
+ * Loads decoded txs for the given txids in order (e.g. full block order including coinbase).
+ * Reuses `transactions` from {@link createBitcoindClients} so callers share one client.
  *
  * @param {{ getTxHex: function }} transactions - bitcoind client `transactions`
  * @param {string[]} txids
  * @param {(current: number, total: number) => void} [onProgress]
  * @returns {Promise<bitcoinJs.Transaction[]>}
  */
-async function getTransactionsFromBitcoindForTxids(transactions, txids, onProgress) {
+async function getTransactionsForTxidsFromBitcoind(transactions, txids, onProgress) {
     const txs = [];
     for (let i = 0; i < txids.length; i++) {
         if (onProgress) {
@@ -49,5 +49,5 @@ async function getTransactionsFromBitcoindForTxids(transactions, txids, onProgre
 
 module.exports = {
     getBitcoinTransactionDataForPmtFromBitcoind,
-    getTransactionsFromBitcoindForTxids,
+    getTransactionsForTxidsFromBitcoind,
 };

@@ -5,17 +5,17 @@ require('dotenv').config({
 });
 
 const bitcoinJs = require('bitcoinjs-lib');
-const merkleLib = require('merkle-lib');
 const { createMempoolBitcoinClients } = require('./mempool-api-client');
-const { createBitcoindBitcoinClients } = require('./bitcoin/bitcoindBitcoinClients');
+const { createBitcoindClients } = require('./bitcoin/bitcoindBitcoinClients');
 const {
     sleep,
     getTransactionWithRetry,
     getBlockInfoByTransactionHash,
     REQUEST_DELAY_MS,
 } = require('./pmt-builder-utils');
-const pmtBuilder = require('../index');
-const { getTransactionsFromBitcoindForTxids } = require('./bitcoin/bitcoindData');
+const { getTransactionsForTxidsFromBitcoind } = require('./bitcoin/bitcoindData');
+const { parseBridgeRegisterBtcCliArgs } = require('./bitcoin/registerBtcCliArgs');
+const { buildRegisterCoinbaseResultFromBlockTxs } = require('./bitcoin/registerBtcCoinbasePayload');
 
 function updateProgress(currentIndex, totalCount) {
     process.stdout.write(`Fetching transactions: ${currentIndex}/${totalCount}\r`);
@@ -26,11 +26,13 @@ function clearProgress() {
 }
 
 /**
+ * Fetches each tx hex from mempool.space (via `getTransactionWithRetry`), with delay between requests.
+ *
  * @param {Object} transactionsClient - must provide `getTxHex({ txid })`.
  * @param {string[]} txIds
  * @returns {Promise<bitcoinJs.Transaction[]>}
  */
-const getAllTxs = async (transactionsClient, txIds) => {
+const getTransactionsForTxidsFromMempool = async (transactionsClient, txIds) => {
     if (txIds.length === 0) {
         console.log('No transactions found in the block.');
         return [];
@@ -59,50 +61,6 @@ const getAllTxs = async (transactionsClient, txIds) => {
     return txs;
 };
 
-/**
- * @param {string} blockHash
- * @param {string[]} blockTxids
- * @param {bitcoinJs.Transaction} coinbaseTx
- * @param {bitcoinJs.Transaction[]} txs - same order as blockTxids
- */
-const buildRegisterCoinbaseResult = (blockHash, blockTxids, coinbaseTx, txs) => {
-    if (!coinbaseTx.ins || coinbaseTx.ins.length === 0) {
-        throw new Error('Coinbase transaction has no inputs.');
-    }
-    const witness = coinbaseTx.ins[0].witness;
-    if (!witness || witness.length === 0) {
-        throw new Error(
-            'Coinbase has no witness data (expected SegWit coinbase with witness reserved value at witness[0]). Pre-SegWit or malformed coinbase.',
-        );
-    }
-    const witnessReservedValue = Buffer.from(witness[0]).toString('hex');
-
-    const coinbaseTxWithoutWitness = coinbaseTx.clone();
-    coinbaseTxWithoutWitness.stripWitnesses();
-    const coinbaseTxHashWithoutWitness = coinbaseTxWithoutWitness.getId();
-
-    if (!txs || txs.length === 0) {
-        throw new Error('Block has no transactions for witness merkle root computation.');
-    }
-    const hashesWithWitness = [
-        Buffer.alloc(32, 0),
-        ...txs.slice(1).map((tx) => Buffer.from(tx.getHash(true))),
-    ];
-    const witnessMerkleTree = merkleLib(hashesWithWitness, bitcoinJs.crypto.hash256);
-    const witnessMerkleRootBuffer = Buffer.from(witnessMerkleTree[witnessMerkleTree.length - 1]);
-    witnessMerkleRootBuffer.reverse();
-
-    const { hex: coinbasePmt } = pmtBuilder.buildPMT(blockTxids, coinbaseTxHashWithoutWitness);
-
-    return {
-        btcTxSerialized: `0x${coinbaseTxWithoutWitness.toHex()}`,
-        btcBlockHash: `0x${blockHash}`,
-        pmtSerialized: `0x${coinbasePmt}`,
-        witnessMerkleRoot: `0x${witnessMerkleRootBuffer.toString('hex')}`,
-        witnessReservedValue: `0x${witnessReservedValue}`,
-    };
-};
-
 const getInformationReadyForRegisterBtcCoinbaseTransactionFromMempool = async (network, txHash) => {
     const { blocks, transactions } = createMempoolBitcoinClients(network);
 
@@ -110,17 +68,12 @@ const getInformationReadyForRegisterBtcCoinbaseTransactionFromMempool = async (n
         unconfirmedBlockDetail: 'in mempool.space response',
     });
 
-    const txs = await getAllTxs(transactions, blockTxids);
-    const coinbaseTx = txs[0];
-    if (!coinbaseTx) {
-        throw new Error('Block has no coinbase transaction.');
-    }
-
-    return buildRegisterCoinbaseResult(blockHash, blockTxids, coinbaseTx, txs);
+    const txs = await getTransactionsForTxidsFromMempool(transactions, blockTxids);
+    return buildRegisterCoinbaseResultFromBlockTxs(blockHash, blockTxids, txs);
 };
 
 const getInformationReadyForRegisterBtcCoinbaseTransactionFromBitcoind = async (txHash) => {
-    const { blocks, transactions } = createBitcoindBitcoinClients();
+    const { blocks, transactions } = createBitcoindClients();
     const { blockHash, blockTxids } = await getBlockInfoByTransactionHash(blocks, transactions, txHash, {
         unconfirmedBlockDetail: 'from Bitcoin Core (tx not confirmed, wrong network, or txindex disabled)',
     });
@@ -128,18 +81,13 @@ const getInformationReadyForRegisterBtcCoinbaseTransactionFromBitcoind = async (
     console.log(
         `Found ${blockTxids.length} transactions. Fetching from local bitcoind (no delay between requests)...`,
     );
-    const txs = await getTransactionsFromBitcoindForTxids(transactions, blockTxids, (current, total) => {
+    const txs = await getTransactionsForTxidsFromBitcoind(transactions, blockTxids, (current, total) => {
         updateProgress(current, total);
     });
     clearProgress();
     console.log(`\nFinished fetching ${blockTxids.length} transactions.`);
 
-    const coinbaseTx = txs[0];
-    if (!coinbaseTx) {
-        throw new Error('Block has no coinbase transaction.');
-    }
-
-    return buildRegisterCoinbaseResult(blockHash, blockTxids, coinbaseTx, txs);
+    return buildRegisterCoinbaseResultFromBlockTxs(blockHash, blockTxids, txs);
 };
 
 const getInformationReadyForRegisterBtcCoinbaseTransaction = async (network, txHash) => {
@@ -156,15 +104,10 @@ const getInformationReadyForRegisterBtcCoinbaseTransaction = async (network, txH
 
 (async () => {
     try {
-        const network = process.argv[2];
-        const txHash = process.argv[3];
-
-        if (!network || !txHash) {
-            console.log(
-                'Usage: node tool/getInformationReadyForRegisterBtcCoinbaseTransaction.js <mainnet|testnet|regtest> <btcTxHashInBlock>',
-            );
-            process.exit(1);
-        }
+        const { network, txHash } = parseBridgeRegisterBtcCliArgs(
+            process.argv,
+            'Usage: node tool/getInformationReadyForRegisterBtcCoinbaseTransaction.js <mainnet|testnet|regtest> <btcTxHashInBlock>',
+        );
 
         const informationReadyForRegisterBtcCoinbaseTransaction =
             await getInformationReadyForRegisterBtcCoinbaseTransaction(network, txHash);

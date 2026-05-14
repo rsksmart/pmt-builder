@@ -15,7 +15,7 @@ const {
  *
  * @returns {{ blocks: { getBlockTxids: function }, transactions: { getTx: function, getTxHex: function } }}
  */
-function createBitcoindBitcoinClients() {
+function createBitcoindClients() {
     const transactions = {
         /**
          * @param {{ txid: string }} params
@@ -65,4 +65,4 @@ function createBitcoindBitcoinClients() {
     return { blocks, transactions };
 }
 
-module.exports = { createBitcoindBitcoinClients };
+module.exports = { createBitcoindClients };
