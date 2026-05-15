@@ -1,19 +1,38 @@
-const pmtBuilder = require("../index");
+const path = require('path');
+require('dotenv').config({
+    path: path.join(__dirname, '..', '.env'),
+    quiet: true,
+});
+
+const pmtBuilder = require('../index');
 const bitcoin = require('bitcoinjs-lib');
-const { createMempoolBitcoinClients } = require("./mempool-api-client");
-const { fetchBlockWtxidsWithTargetWtxid, getTransactionWithRetry, getBlockInfoByTransactionHash } = require("./pmt-builder-utils");
+const { createMempoolBitcoinClients } = require('./mempool-api-client');
+const { createBitcoindClients } = require('./bitcoin/bitcoindBitcoinClients');
+const { fetchBlockWtxidsWithTargetWtxid } = require('./pmt-builder-utils');
+const { getBitcoinTransactionDataForPmt } = require('./bitcoin/transactionDataForPmt');
+const { isMempoolNetwork } = require('./bitcoin/networks');
+const { parseBridgeRegisterBtcCliArgs } = require('./bitcoin/registerBtcCliArgs');
 
 const getInformationReadyForRegisterBtcTransaction = async (network, txHash) => {
-    const { blocks, transactions } = createMempoolBitcoinClients(network);
+    const {
+        rawHex: rawTargetBtcTransaction,
+        blockHeight,
+        blockTxids,
+    } = await getBitcoinTransactionDataForPmt(txHash, network);
 
-    const { blockHeight, blockTxids } = await getBlockInfoByTransactionHash(blocks, transactions, txHash);
-    const rawTargetBtcTransaction = await getTransactionWithRetry(transactions, txHash);
     const targetTx = bitcoin.Transaction.fromHex(rawTargetBtcTransaction);
     const hasWitness = targetTx.hasWitnesses();
 
     let resultPmt;
     if (hasWitness) {
-        const { blockWtxids, targetWtxid } = await fetchBlockWtxidsWithTargetWtxid(transactions, blockTxids, txHash);
+        const { transactions } = isMempoolNetwork(network)
+            ? createMempoolBitcoinClients(network)
+            : createBitcoindClients();
+        const { blockWtxids, targetWtxid } = await fetchBlockWtxidsWithTargetWtxid(
+            transactions,
+            blockTxids,
+            txHash,
+        );
         resultPmt = pmtBuilder.buildPMT(blockWtxids, targetWtxid);
     } else {
         resultPmt = pmtBuilder.buildPMT(blockTxids, txHash);
@@ -30,13 +49,18 @@ const getInformationReadyForRegisterBtcTransaction = async (network, txHash) => 
 
 (async () => {
     try {
-        const network = process.argv[2];
-        const txHash = process.argv[3];
+        const { network, txHash } = parseBridgeRegisterBtcCliArgs(
+            process.argv,
+            'Usage: node tool/getInformationReadyForRegisterBtcTransaction.js <mainnet|testnet|regtest> <btcTransactionHash>',
+        );
 
-        const informationReadyForRegisterBtcTransaction = await getInformationReadyForRegisterBtcTransaction(network, txHash);
+        const informationReadyForRegisterBtcTransaction =
+            await getInformationReadyForRegisterBtcTransaction(network, txHash);
 
-        console.log('Transaction Information ready for registerBtcTransaction: ', informationReadyForRegisterBtcTransaction);
-
+        console.log(
+            'Transaction Information ready for registerBtcTransaction: ',
+            informationReadyForRegisterBtcTransaction,
+        );
     } catch (e) {
         console.log(e);
     }
