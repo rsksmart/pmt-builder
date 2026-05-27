@@ -16,14 +16,12 @@ const {
 const { getTransactionsForTxidsFromBitcoind } = require('./bitcoin/bitcoindData');
 const { parseBridgeRegisterBtcCliArgs } = require('./bitcoin/registerBtcCliArgs');
 const { buildRegisterCoinbaseResultFromBlockTxs } = require('./bitcoin/registerBtcCoinbasePayload');
+const {
+    createProgressReporter,
+    logFetchTransactionsComplete,
+} = require('./bitcoin/cliProgress');
 
-function updateProgress(currentIndex, totalCount) {
-    process.stdout.write(`Fetching transactions: ${currentIndex}/${totalCount}\r`);
-}
-
-function clearProgress() {
-    process.stdout.write('\x1b[2K\r');
-}
+const reportTransactionFetchProgress = createProgressReporter('Fetching transactions');
 
 /**
  * Fetches each tx hex from mempool.space (via `getTransactionWithRetry`), with delay between requests.
@@ -47,7 +45,7 @@ const getTransactionsForTxidsFromMempool = async (transactionsClient, txIds) => 
 
     for (let i = 0; i < txIds.length; i++) {
         const txId = txIds[i];
-        updateProgress(i + 1, totalTxs);
+        reportTransactionFetchProgress(i + 1, totalTxs);
         const tx = await getTransactionWithRetry(transactionsClient, txId);
         txs.push(bitcoinJs.Transaction.fromHex(tx));
         if (i < txIds.length - 1) {
@@ -55,8 +53,7 @@ const getTransactionsForTxidsFromMempool = async (transactionsClient, txIds) => 
         }
     }
 
-    clearProgress();
-    console.log(`\nFinished fetching ${totalTxs} transactions.`);
+    logFetchTransactionsComplete(totalTxs);
 
     return txs;
 };
@@ -81,11 +78,8 @@ const getInformationReadyForRegisterBtcCoinbaseTransactionFromBitcoind = async (
     console.log(
         `Found ${blockTxids.length} transactions. Fetching from local bitcoind (no delay between requests)...`,
     );
-    const txs = await getTransactionsForTxidsFromBitcoind(transactions, blockTxids, (current, total) => {
-        updateProgress(current, total);
-    });
-    clearProgress();
-    console.log(`\nFinished fetching ${blockTxids.length} transactions.`);
+    const txs = await getTransactionsForTxidsFromBitcoind(transactions, blockTxids, reportTransactionFetchProgress);
+    logFetchTransactionsComplete(blockTxids.length);
 
     return buildRegisterCoinbaseResultFromBlockTxs(blockHash, blockTxids, txs);
 };

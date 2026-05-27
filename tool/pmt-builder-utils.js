@@ -10,13 +10,17 @@ const TOO_MANY_REQUESTS_ERROR_CODE = 429; // HTTP status code for Too Many Reque
  * @param {Object} transactionsClient - Client instance used to fetch transaction data (must provide `getTxHex`).
  * @param {string[]} blockTxids - Array of transaction IDs in the block.
  * @param {string} targetTxId - The transaction ID for which the wtxid is specifically needed.
+ * @param {(current: number, total: number) => void} [onProgress] - Optional callback after each tx is fetched.
  * @returns {Promise<{blockWtxids: string[], targetWtxid: string}>} - An object containing all wtxids and the target wtxid.
  * @throws {Error} - If the transaction details cannot be fetched or if the transaction is malformed.
  */
-const fetchBlockWtxidsWithTargetWtxid = async (transactionsClient, blockTxids, targetTxId) => {
+const fetchBlockWtxidsWithTargetWtxid = async (transactionsClient, blockTxids, targetTxId, onProgress) => {
     const blockWtxids = [];
     let targetWtxid;
     for (let i = 0; i < blockTxids.length; i++) {
+        if (onProgress) {
+            onProgress(i + 1, blockTxids.length);
+        }
         const txid = blockTxids[i];
         const wtxid = await getWtxid(transactionsClient, txid);
 
