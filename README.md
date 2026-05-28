@@ -149,7 +149,7 @@ This is how to use it:
 
 **CLI argument order:** `<network>` first, then a **txid of any confirmed transaction in the target block** (the tool loads that block’s coinbase). Same ordering as the `registerBtcTransaction` helper above.
 
-Example (mainnet):
+Example (testnet):
 
 > node tool/getInformationReadyForRegisterBtcCoinbaseTransaction.js testnet fba7b0c2af3af7dfb90bf2dee036ec2e5060dbe9d32781cb65ea29f7b90d42de
 
