@@ -21,8 +21,8 @@
   },
   "dependencies": {
     "chai": "6.2.2",
-    "dotenv": "17.3.1",
-    "mocha": "11.7.5"
+    "dotenv": "17.4.2",
+    "mocha": "11.7.6"
   },
   "types": "./index.d.ts",
   "devDependencies": {
