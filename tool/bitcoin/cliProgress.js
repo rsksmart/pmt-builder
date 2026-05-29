@@ -20,7 +20,7 @@ function createProgressReporter(label) {
 }
 
 /**
- * @param {number} totalCount
+ * @param {number} totalCount - Number of transactions fetched.
  * @param {string} [suffix] - Optional text after the count (e.g. "Building PMT...").
  */
 function logFetchTransactionsComplete(totalCount, suffix) {

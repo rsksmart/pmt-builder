@@ -32,7 +32,7 @@ async function getBitcoinTransactionDataForPmtFromBitcoind(transactionHash) {
  *
  * @param {{ getTxHex: function }} transactions - bitcoind client `transactions`
  * @param {string[]} txids
- * @param {(current: number, total: number) => void} [onProgress]
+ * @param {(currentTxIndex: number, totalTxids: number) => void} [onProgress] - Optional progress callback invoked before each tx fetch.
  * @returns {Promise<bitcoinJs.Transaction[]>}
  */
 async function getTransactionsForTxidsFromBitcoind(transactions, txids, onProgress) {
