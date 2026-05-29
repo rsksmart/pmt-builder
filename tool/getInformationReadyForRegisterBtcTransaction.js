@@ -12,13 +12,25 @@ const { fetchBlockWtxidsWithTargetWtxid } = require('./pmt-builder-utils');
 const { getBitcoinTransactionDataForPmt } = require('./bitcoin/transactionDataForPmt');
 const { isMempoolNetwork } = require('./bitcoin/networks');
 const { parseBridgeRegisterBtcCliArgs } = require('./bitcoin/registerBtcCliArgs');
+const {
+    createProgressReporter,
+    logFetchTransactionsComplete,
+} = require('./bitcoin/cliProgress');
+
+const reportWtxidFetchProgress = createProgressReporter('Fetching transactions for wtxids');
 
 const getInformationReadyForRegisterBtcTransaction = async (network, txHash) => {
+    console.log(`Fetching transaction ${txHash} on ${network}...`);
+
     const {
         rawHex: rawTargetBtcTransaction,
         blockHeight,
         blockTxids,
     } = await getBitcoinTransactionDataForPmt(txHash, network);
+
+    console.log(
+        `Found ${blockTxids.length} transactions in block at height ${blockHeight}.`,
+    );
 
     const targetTx = bitcoin.Transaction.fromHex(rawTargetBtcTransaction);
     const hasWitness = targetTx.hasWitnesses();
@@ -28,13 +40,19 @@ const getInformationReadyForRegisterBtcTransaction = async (network, txHash) => 
         const { transactions } = isMempoolNetwork(network)
             ? createMempoolBitcoinClients(network)
             : createBitcoindClients();
+        console.log(
+            'SegWit transaction: fetching each transaction in the block to compute wtxids...',
+        );
         const { blockWtxids, targetWtxid } = await fetchBlockWtxidsWithTargetWtxid(
             transactions,
             blockTxids,
             txHash,
+            reportWtxidFetchProgress,
         );
+        logFetchTransactionsComplete(blockTxids.length, 'Building PMT...');
         resultPmt = pmtBuilder.buildPMT(blockWtxids, targetWtxid);
     } else {
+        console.log('Non-SegWit transaction: building PMT from block txids (no extra fetches).');
         resultPmt = pmtBuilder.buildPMT(blockTxids, txHash);
     }
 
