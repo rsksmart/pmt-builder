@@ -114,3 +114,5 @@ const getInformationReadyForRegisterBtcCoinbaseTransaction = async (network, txH
         console.log(e);
     }
 })();
+
+module.exports = { getInformationReadyForRegisterBtcCoinbaseTransaction };
