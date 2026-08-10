@@ -22,7 +22,7 @@
   "dependencies": {
     "chai": "6.2.2",
     "dotenv": "17.4.2",
-    "mocha": "11.7.6"
+    "mocha": "11.8.0"
   },
   "types": "./index.d.ts",
   "devDependencies": {
