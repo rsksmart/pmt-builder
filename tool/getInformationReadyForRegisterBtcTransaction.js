@@ -83,3 +83,7 @@ const getInformationReadyForRegisterBtcTransaction = async (network, txHash) => 
         console.log(e);
     }
 })();
+
+module.exports = {
+    getInformationReadyForRegisterBtcTransaction
+}
