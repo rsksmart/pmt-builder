@@ -65,24 +65,26 @@ const getInformationReadyForRegisterBtcTransaction = async (network, txHash) => 
     return informationReadyForRegisterBtcTransaction;
 };
 
-(async () => {
-    try {
-        const { network, txHash } = parseBridgeRegisterBtcCliArgs(
-            process.argv,
-            'Usage: node tool/getInformationReadyForRegisterBtcTransaction.js <mainnet|testnet|regtest> <btcTransactionHash>',
-        );
+if (require.main === module) {
+    (async () => {
+        try {
+            const { network, txHash } = parseBridgeRegisterBtcCliArgs(
+                process.argv,
+                'Usage: node tool/getInformationReadyForRegisterBtcTransaction.js <mainnet|testnet|regtest> <btcTransactionHash>',
+            );
 
-        const informationReadyForRegisterBtcTransaction =
-            await getInformationReadyForRegisterBtcTransaction(network, txHash);
+            const informationReadyForRegisterBtcTransaction =
+                await getInformationReadyForRegisterBtcTransaction(network, txHash);
 
-        console.log(
-            'Transaction Information ready for registerBtcTransaction: ',
-            informationReadyForRegisterBtcTransaction,
-        );
-    } catch (e) {
-        console.log(e);
-    }
-})();
+            console.log(
+                'Transaction Information ready for registerBtcTransaction: ',
+                informationReadyForRegisterBtcTransaction,
+            );
+        } catch (e) {
+            console.log(e);
+        }
+    })();
+}
 
 module.exports = {
     getInformationReadyForRegisterBtcTransaction
