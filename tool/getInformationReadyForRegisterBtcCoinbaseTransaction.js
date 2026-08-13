@@ -6,7 +6,7 @@ require('dotenv').config({
 
 const bitcoinJs = require('bitcoinjs-lib');
 const { createMempoolBitcoinClients } = require('./mempool-api-client');
-const { createBitcoindClients } = require('./bitcoin/bitcoindBitcoinClients');
+const { createBitcoindClients } = require('./bitcoin/bitcoindClients');
 const {
     sleep,
     getTransactionWithRetry,

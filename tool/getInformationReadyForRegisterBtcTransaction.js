@@ -7,7 +7,7 @@ require('dotenv').config({
 const pmtBuilder = require('../index');
 const bitcoin = require('bitcoinjs-lib');
 const { createMempoolBitcoinClients } = require('./mempool-api-client');
-const { createBitcoindClients } = require('./bitcoin/bitcoindBitcoinClients');
+const { createBitcoindClients } = require('./bitcoin/bitcoindClients');
 const { fetchBlockWtxidsWithTargetWtxid } = require('./pmt-builder-utils');
 const { getBitcoinTransactionDataForPmt } = require('./bitcoin/transactionDataForPmt');
 const { isMempoolNetwork } = require('./bitcoin/networks');
