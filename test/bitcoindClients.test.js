@@ -1,4 +1,4 @@
-const { createBitcoindClients } = require('../tool/bitcoin/bitcoindBitcoinClients');
+const { createBitcoindClients } = require('../tool/bitcoin/bitcoindClients');
 
 let expect;
 

@@ -55,4 +55,33 @@ describe('validateBridgeRegisterBtcCliArgs', () => {
         expect(validationResult.ok).to.equal(false);
         expect(validationResult.reason).to.equal('bad_txid');
     });
+
+    describe('--send flag', () => {
+        it('defaults send to false when the flag is absent', () => {
+            const validationResult = validateBridgeRegisterBtcCliArgs(['node', 'x.js', 'testnet', validTxid]);
+            expect(validationResult.ok).to.equal(true);
+            expect(validationResult.send).to.equal(false);
+        });
+
+        it('sets send when the flag is passed after the filtered args', () => {
+            const validationResult = validateBridgeRegisterBtcCliArgs(['node', 'x.js', 'testnet', validTxid, '--send']);
+            expect(validationResult.ok).to.equal(true);
+            expect(validationResult.send).to.equal(true);
+        });
+
+        it('sets send when the flag is passed before the filtered args', () => {
+            const validationResult = validateBridgeRegisterBtcCliArgs(['node', 'x.js', '--send', 'testnet', validTxid]);
+            expect(validationResult.ok).to.equal(true);
+            expect(validationResult.network).to.equal('testnet');
+            expect(validationResult.txHash).to.equal(validTxid);
+            expect(validationResult.send).to.equal(true);
+        });
+
+        it('rejects an unknown flag instead of silently dry-running', () => {
+            const validationResult = validateBridgeRegisterBtcCliArgs(['node', 'x.js', 'testnet', validTxid, '--sned']);
+            expect(validationResult.ok).to.equal(false);
+            expect(validationResult.reason).to.equal('unknown_flag');
+            expect(validationResult.flag).to.equal('--sned');
+        });
+    });
 });

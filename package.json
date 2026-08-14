@@ -26,6 +26,8 @@
   },
   "types": "./index.d.ts",
   "devDependencies": {
+    "@rsksmart/rsk-precompiled-abis": "9.0.0-VETIVER",
+    "ethers": "6.16.0",
     "bitcoinjs-lib": "7.0.1",
     "merkle-lib": "2.0.10"
   }

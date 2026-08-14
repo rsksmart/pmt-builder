@@ -6,7 +6,7 @@ require('dotenv').config({
 
 const bitcoinJs = require('bitcoinjs-lib');
 const { createMempoolBitcoinClients } = require('./mempool-api-client');
-const { createBitcoindClients } = require('./bitcoin/bitcoindBitcoinClients');
+const { createBitcoindClients } = require('./bitcoin/bitcoindClients');
 const {
     sleep,
     getTransactionWithRetry,
@@ -96,21 +96,25 @@ const getInformationReadyForRegisterBtcCoinbaseTransaction = async (network, txH
     );
 };
 
-(async () => {
-    try {
-        const { network, txHash } = parseBridgeRegisterBtcCliArgs(
-            process.argv,
-            'Usage: node tool/getInformationReadyForRegisterBtcCoinbaseTransaction.js <mainnet|testnet|regtest> <btcTxHashInBlock>',
-        );
+if (require.main === module) {
+    (async () => {
+        try {
+            const { network, txHash } = parseBridgeRegisterBtcCliArgs(
+                process.argv,
+                'Usage: node tool/getInformationReadyForRegisterBtcCoinbaseTransaction.js <mainnet|testnet|regtest> <btcTxHashInBlock>',
+            );
 
-        const informationReadyForRegisterBtcCoinbaseTransaction =
-            await getInformationReadyForRegisterBtcCoinbaseTransaction(network, txHash);
+            const informationReadyForRegisterBtcCoinbaseTransaction =
+                await getInformationReadyForRegisterBtcCoinbaseTransaction(network, txHash);
 
-        console.log(
-            'Transaction Information ready for registerBtcCoinbaseTransaction: ',
-            informationReadyForRegisterBtcCoinbaseTransaction,
-        );
-    } catch (e) {
-        console.log(e);
-    }
-})();
+            console.log(
+                'Transaction Information ready for registerBtcCoinbaseTransaction: ',
+                informationReadyForRegisterBtcCoinbaseTransaction,
+            );
+        } catch (e) {
+            console.log(e);
+        }
+    })();
+}
+
+module.exports = { getInformationReadyForRegisterBtcCoinbaseTransaction };

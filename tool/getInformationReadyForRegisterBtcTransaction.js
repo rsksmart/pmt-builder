@@ -7,7 +7,7 @@ require('dotenv').config({
 const pmtBuilder = require('../index');
 const bitcoin = require('bitcoinjs-lib');
 const { createMempoolBitcoinClients } = require('./mempool-api-client');
-const { createBitcoindClients } = require('./bitcoin/bitcoindBitcoinClients');
+const { createBitcoindClients } = require('./bitcoin/bitcoindClients');
 const { fetchBlockWtxidsWithTargetWtxid } = require('./pmt-builder-utils');
 const { getBitcoinTransactionDataForPmt } = require('./bitcoin/transactionDataForPmt');
 const { isMempoolNetwork } = require('./bitcoin/networks');
@@ -65,21 +65,27 @@ const getInformationReadyForRegisterBtcTransaction = async (network, txHash) => 
     return informationReadyForRegisterBtcTransaction;
 };
 
-(async () => {
-    try {
-        const { network, txHash } = parseBridgeRegisterBtcCliArgs(
-            process.argv,
-            'Usage: node tool/getInformationReadyForRegisterBtcTransaction.js <mainnet|testnet|regtest> <btcTransactionHash>',
-        );
+if (require.main === module) {
+    (async () => {
+        try {
+            const { network, txHash } = parseBridgeRegisterBtcCliArgs(
+                process.argv,
+                'Usage: node tool/getInformationReadyForRegisterBtcTransaction.js <mainnet|testnet|regtest> <btcTransactionHash>',
+            );
 
-        const informationReadyForRegisterBtcTransaction =
-            await getInformationReadyForRegisterBtcTransaction(network, txHash);
+            const informationReadyForRegisterBtcTransaction =
+                await getInformationReadyForRegisterBtcTransaction(network, txHash);
 
-        console.log(
-            'Transaction Information ready for registerBtcTransaction: ',
-            informationReadyForRegisterBtcTransaction,
-        );
-    } catch (e) {
-        console.log(e);
-    }
-})();
+            console.log(
+                'Transaction Information ready for registerBtcTransaction: ',
+                informationReadyForRegisterBtcTransaction,
+            );
+        } catch (e) {
+            console.log(e);
+        }
+    })();
+}
+
+module.exports = {
+    getInformationReadyForRegisterBtcTransaction
+}

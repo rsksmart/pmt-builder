@@ -1,5 +1,5 @@
 const bitcoinJs = require('bitcoinjs-lib');
-const { createBitcoindClients } = require('./bitcoindBitcoinClients');
+const { createBitcoindClients } = require('./bitcoindClients');
 const { getBlockInfoByTransactionHash } = require('../pmt-builder-utils');
 
 /**
