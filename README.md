@@ -73,7 +73,7 @@ For example:
 
 ### Regtest setup
 
-Both Bridge helpers below support **`regtest`** by calling a local [Bitcoin Core](https://bitcoincore.org/) node over **JSON-RPC**. Configure this once, then run the `node` commands without exporting variables manually.
+The Bridge helpers below support **`regtest`** by calling a local [Bitcoin Core](https://bitcoincore.org/) node over **JSON-RPC**. Configure this once, then run the `node` commands without exporting variables manually.
 
 1. **Create or edit `.env` in the project root.** Copy `.env.example` to `.env` if needed. Set:
    - **`BITCOIND_RPC_URL`** — HTTP JSON-RPC base URL, e.g. `http://127.0.0.1:18443` (Bitcoin Core’s default regtest RPC port is **18443**; **18444** is the default regtest P2P port). Use whatever host/port your `rpcport` / `rpcbind` uses.
@@ -88,6 +88,8 @@ With `.env` in place, examples:
 `node tool/getInformationReadyForRegisterBtcTransaction.js regtest <btcTransactionHash>`
 
 `node tool/getInformationReadyForRegisterBtcCoinbaseTransaction.js regtest <btcTransactionHashInBlock>`
+
+`node tool/getInformationReadyForRegisterPegoutTransaction.js regtest <btcPegoutTransactionHash>`
 
 ### Getting a pegin btc transaction information ready to register
 
@@ -132,6 +134,46 @@ Simply go to `Write Contract`, then click on `Connect Wallet`, Click on `registe
 Notice that the hex value of these fields (`tx` and `pmt`) have the `0x` prefix, that's because the `registerBtcTransaction` requires them to be like that.
 
 To check if it has been successfully registered, go to `Read Contract`, then click on `isBtcTxHashAlreadyProcessed` to expand it, paste the btc transaction hash and click on `Read`. If it returns `true`, then it has been registered. You can also use `getBtcTxHashProcessedHeight` to get the block number where it was processed.
+
+### Getting a pegout btc transaction information ready to register
+
+The Bridge `registerPegoutTransaction` method (available from Cardamom) receives 3 parameters: `btcTxHash`, the pegout btc transaction hash. `height`, the block height for this transaction. `pmtSerialized`, the Partial Merkle Tree of this transaction.
+
+Unlike `registerBtcTransaction`, it receives the btc transaction hash instead of the raw btc transaction.
+
+To ease the process of registering a pegout btc transaction, the function `getInformationReadyForRegisterPegoutTransaction` gets these values for you, given a bitcoin network name (`mainnet`, `testnet`, or `regtest`) and a btc transaction hash, ready to be sent to the Bridge `registerPegoutTransaction` method without further setup.
+
+The PMT is always built from the block txids, also for SegWit transactions, since the Bridge validates it against the block header merkle root. There is no need to register the block coinbase first.
+
+For **mainnet** and **testnet**, data is fetched from the [Mempool Space](https://mempool.space) public REST API, with the same 429 retry behavior as the `registerBtcTransaction` helper (eventually **throws** if rate limits persist).
+
+For **regtest**, see [Regtest setup](#regtest-setup) above.
+
+This is how to use it:
+
+`node tool/getInformationReadyForRegisterPegoutTransaction.js <network> <btcTransactionHash>`
+
+**CLI argument order:** `<network>` first, then the pegout btc **txid** (hex). Same ordering as the `registerBtcTransaction` helper above.
+
+Example (testnet):
+
+> node tool/getInformationReadyForRegisterPegoutTransaction.js testnet 00f86a57fe1bc64b587545ba076accc45b6a4a67ad3d3821ddf7130e9a8c05c7
+
+It will return the following:
+
+```js
+{
+  btcTxHash: '0x00f86a57fe1bc64b587545ba076accc45b6a4a67ad3d3821ddf7130e9a8c05c7',
+  height: 5261130,
+  pmtSerialized: '0x0900000005edf59a63a3b7e8e09add89ee47110bfff739f5babca98da4269b14f5e36d4d6ec7058c9a0e13f7dd21383dad674a6a5bc4cc6a07ba4575584bc61bfe576af800dce66029d9a87f744d00f24f287e4441716a11f6a7b0bcc0dbc3f5ed44964834670c6fc831381207d2ed8c76fcd255538b92c220a488be1851ebf9126be1490a5b5fcc1a33991efeabe1e66cf51971c049a8c6f58a51b8e3b1136a619dbe7298023b00'
+}
+```
+
+Then you can copy the `btcTxHash`, `height` and `pmtSerialized` as parameters to the Bridge `registerPegoutTransaction` method.
+
+You can use the Rootstock explorer to register the pegout transaction following the same steps as for `registerBtcTransaction`, once `registerPegoutTransaction` is available on that network.
+
+Notice that the Bridge does not revert when it cannot register a pegout transaction (for example, when it has no pending UTXOs or it was already processed). To check if it has been successfully registered, use `isBtcTxHashAlreadyProcessed` as described above.
 
 ### Getting a coinbase transaction information ready to register
 
