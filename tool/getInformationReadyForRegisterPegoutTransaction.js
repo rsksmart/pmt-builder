@@ -56,6 +56,7 @@ if (require.main === module) {
             );
         } catch (e) {
             console.log(e);
+            process.exit(1);
         }
     })();
 }
