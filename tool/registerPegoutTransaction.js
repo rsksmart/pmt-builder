@@ -63,6 +63,7 @@ const main = async () => {
             console.log(`Btc transaction ${btcTxHash} is now registered in the Bridge.`);
         } else {
             console.warn(`The RSK transaction succeeded but the Bridge did not register ${btcTxHash}.`);
+            process.exitCode = 1;
         }
     } finally {
         provider.destroy();
