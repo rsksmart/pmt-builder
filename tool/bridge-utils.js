@@ -101,9 +101,9 @@ const estimateGasLimit = async (provider, { from, data }) => {
             const message = callError.shortMessage ?? callError.message;
             throw new Error(
                 `The Bridge rejected this call, so it was not signed or broadcast: ${message}\n`
-                + 'Common causes: the block coinbase is not registered yet (required for SegWit '
-                + "transactions); the btc block is not in the Bridge's headers chain yet, or lacks "
-                + 'confirmations.',
+                + 'Common causes: the block coinbase is not registered yet (required for registering '
+                + "SegWit transactions through registerBtcTransaction); the btc block is not in the "
+                + "Bridge's headers chain yet, or lacks confirmations.",
                 { cause: callError },
             );
         }
