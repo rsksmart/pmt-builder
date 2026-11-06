@@ -26,7 +26,7 @@
   },
   "types": "./index.d.ts",
   "devDependencies": {
-    "@rsksmart/rsk-precompiled-abis": "github:rsksmart/rsk-precompiled-abis#add-rskip643-methods",
+    "@rsksmart/rsk-precompiled-abis": "github:rsksmart/rsk-precompiled-abis#1ec006db9638979423f1c2a4c82609ba01ae37f7",
     "bitcoinjs-lib": "7.0.1",
     "ethers": "6.16.0",
     "merkle-lib": "2.0.10"
