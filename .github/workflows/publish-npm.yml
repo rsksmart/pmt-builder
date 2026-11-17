@@ -2,140 +2,152 @@ name: Deploy packages on NPM
 
 on:
   release:
-    types: [created, edited, published]
+    types: [published]
 
 # Declare default permissions as read only.
 permissions: read-all
 
 jobs:
-  check-packages:
+  publish:
+    permissions:
+      id-token: write
+      contents: read
+
     runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
 
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
-      - name: "Check packages existence"
+      - name: "Check file existence"
         id: check_files
         uses: andstor/file-existence-action@558493d6c74bf472d87c84eab196434afc2fa029 # v3.1.0
         with:
-          files: "package.json, README.md, packages/**/package.json"
+          files: "package.json, README.md"
           
-      - name: Required files exist
+      - name: File exists
         if: steps.check_files.outputs.files_exists != 'true'
-        run: exit 1
-
-      - name: Generate packages paths
-        id: set-matrix
+        # Only runs if all of the files exists
         run: |
-            package_json_paths=()
-            for dir in packages/*/; do
-            folder_name="${dir%/}"
-            package_json_paths+=("\"$folder_name\"")
-            done
-            json_list="[$(IFS=,; echo "${package_json_paths[*]}")]"
-            echo "matrix=$json_list" >> "$GITHUB_OUTPUT"   
-      - run: |
-            echo "${{ steps.set-matrix.outputs.matrix }}"
-    
-  process-packages:
-      needs: [check-packages]
-      runs-on: ubuntu-latest
-      strategy:
-        matrix:
-          package: ${{ fromJson(needs.check-packages.outputs.matrix) }}
-  
-      steps:
-        - name: Checkout
-          uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        - name: Process package
-          run: |
-            echo "Processing package: ${{ matrix.package }}"
+          echo "ERROR: Required files (package.json, README.md) are missing!"
+          exit 1
 
-        - name: Get package.json package name and match with repository name
-          run: |
-            echo PACKAGE_NAME=$(cat ${{ matrix.package }}/package.json | jq -r .name | cut -f2 -d"\"" | cut -f2 -d"@") >> $GITHUB_OUTPUT
-            echo PACKAGE_VERSION="refs/tags/v"$(cat ${{ matrix.package }}/package.json | jq -r .version) >> $GITHUB_OUTPUT
-            echo PACKAGE_REPOSITORY=$(cat ${{ matrix.package }}/package.json | jq -r .repository.url | sed 's/\+https//') >> $GITHUB_OUTPUT
-          id: get_package_info
+      - name: Get package.json package name and match with repository name
+        run: |
+          echo PACKAGE_NAME=$(cat package.json | jq -r .name | cut -f2 -d"\"" | cut -f2 -d"@") >> $GITHUB_OUTPUT
+          echo PACKAGE_VERSION="refs/tags/v"$(cat package.json | jq -r .version) >> $GITHUB_OUTPUT
+          echo PACKAGE_REPOSITORY=$(cat package.json | jq -r .repository.url | sed 's/^[^:]*:/git:/') >> $GITHUB_OUTPUT
+        id: get_package_info
 
-        - name: Print outputs for debugging
-          run: |
-            echo "GitHub Repository: ${{ github.repository }}"
-            echo "Package Name: ${{ steps.get_package_info.outputs.PACKAGE_NAME }}"
-            echo "Github Tag: ${{ github.ref }}"
-            echo "Package Version: ${{ steps.get_package_info.outputs.PACKAGE_VERSION }}"
-            echo "GitHub Repository URL: ${{ github.repositoryUrl }}"
-            echo "Package Repository: ${{ steps.get_package_info.outputs.PACKAGE_REPOSITORY }}"
+      - name: Print outputs for debugging
+        run: |
+          echo "GitHub Repository: ${{ github.repository }}"
+          echo "Package Name: ${{ steps.get_package_info.outputs.PACKAGE_NAME }}"
+          echo "Github Tag: ${{ github.ref }}"
+          echo "Package Version: ${{ steps.get_package_info.outputs.PACKAGE_VERSION }}"
+          echo "GitHub Repository URL: ${{ github.repositoryUrl }}"
+          echo "Package Repository: ${{ steps.get_package_info.outputs.PACKAGE_REPOSITORY }}"
 
-        - name: Setup NodeJS
-          uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
-          with:
-            node-version-file: '.nvmrc'
-            cache: 'npm'
-            registry-url: https://registry.npmjs.org
+      - name: Check if package_name matches with repository name
+        if: github.repository != steps.get_package_info.outputs.PACKAGE_NAME
+        # Fail if package name not properly configured
+        run: |
+          echo "ERROR: Package name '${{ steps.get_package_info.outputs.PACKAGE_NAME }}' does not match repository name '${{ github.repository }}'"
+          exit 1
 
-    #   Install dependencies and build
-        - name: Install dependencies and build
-          run: |
-            npm ci
-            npm run build
-
-        - name: Pre upload validation
-          id: pack
-          run: |
-            cd ${{ matrix.package }}
-            npm pack --dry-run > output 2>&1
-            PRE_UPLOAD_HASH=$(grep 'shasum' output | awk '{print $NF}')
-            echo "PRE_UPLOAD_HASH=$PRE_UPLOAD_HASH" >> $GITHUB_OUTPUT
-            echo "PRE_UPLOAD_HASH: $PRE_UPLOAD_HASH"
-        
-        - name: Check if version is already published
-          run: |
-            PACKAGE_NAME=$(cat ${{ matrix.package }}/package.json | jq -r .name)
-            PACKAGE_VERSION=$(cat ${{ matrix.package }}/package.json | jq -r .version)
-
-            if npm view $PACKAGE_NAME@$PACKAGE_VERSION > /dev/null 2>&1; then
-                echo "Version $PACKAGE_VERSION of $PACKAGE_NAME is already published."
-                exit 0
-            fi
-
-            echo "Version $PACKAGE_VERSION of $PACKAGE_NAME is not published. Proceeding with publishing..."
-
-        - name: Upload package
-          run: |
-            cd ${{ matrix.package }}
-            npm publish --access public
-          env:
-            NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+      - name: Check if package version matches with tag
+        if: github.ref != steps.get_package_info.outputs.PACKAGE_VERSION
+        # Fail if package version not properly set
+        run: |
+          echo "ERROR: Package version '${{ steps.get_package_info.outputs.PACKAGE_VERSION }}' does not match GitHub tag '${{ github.ref }}'"
+          exit 1
       
-        - name: Post upload validation
-          id: unpack
-          run: |
-            # Get the package name and version
-            PACKAGE_NAME=$(cat ${{ matrix.package }}/package.json | jq -r .name)
-            PACKAGE_VERSION=$(cat ${{ matrix.package }}/package.json | jq -r .version)
-            FULL_PACKAGE_NAME="${PACKAGE_NAME}@${PACKAGE_VERSION}"
+      - name: Check if package repository matches with repository
+        if: github.repositoryUrl != steps.get_package_info.outputs.PACKAGE_REPOSITORY
+        # Fail if package repository doesn't match with repository
+        run: |
+          echo "ERROR: Package repository URL '${{ steps.get_package_info.outputs.PACKAGE_REPOSITORY }}' does not match GitHub repository URL '${{ github.repositoryUrl }}'"
+          exit 1
 
-            # Wait for package propagation
-            echo "Waiting for package propagation..."
-            sleep 15
+      - name: Setup Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 24
+          cache: 'npm'
+          registry-url: https://registry.npmjs.org
 
-            # Fetch the shasum from npm
-            POST_UPLOAD_HASH=$(npm view $FULL_PACKAGE_NAME dist.shasum)
-            echo "POST_UPLOAD_HASH=$POST_UPLOAD_HASH" >> $GITHUB_OUTPUT
-            echo "POST_UPLOAD_HASH: $POST_UPLOAD_HASH"
+      - name: Clean install dependencies
+        run: |
+          rm -rf dist
+          npm ci
 
-        - name: Pre and Post Upload validation
-          run: |
-            echo "Comparing hashes..."
-            echo "PRE_UPLOAD_HASH: '${{ steps.pack.outputs.PRE_UPLOAD_HASH }}'"
-            echo "POST_UPLOAD_HASH: '${{ steps.unpack.outputs.POST_UPLOAD_HASH }}'"
+      - name: Install npm
+        run: npm install -g npm@11.11.0
 
-            if [ "${{ steps.pack.outputs.PRE_UPLOAD_HASH }}" != "${{ steps.unpack.outputs.POST_UPLOAD_HASH }}" ]; then
-                echo "Hash mismatch detected!"
-                exit 1
+      - name: Run tests
+        run: npm run test
+
+      - name: Pre upload validation
+        id: pack
+        run: | 
+          rm -f *.tgz
+          PRE_UPLOAD_HASH=$(npm pack --dry-run 2>&1 | grep 'shasum:' | awk '{print $NF}')
+          echo "PRE_UPLOAD_HASH=$PRE_UPLOAD_HASH" >> $GITHUB_OUTPUT
+          echo "PRE_UPLOAD_HASH: $PRE_UPLOAD_HASH"
+        
+      - name: Check if version is already published
+        run: |
+          PACKAGE_NAME=$(cat package.json | jq -r .name)
+          PACKAGE_VERSION=$(cat package.json | jq -r .version)
+
+          if npm view $PACKAGE_NAME@$PACKAGE_VERSION > /dev/null 2>&1; then
+            echo "Version $PACKAGE_VERSION of $PACKAGE_NAME is already published."
+            exit 1
+          fi
+
+          echo "Version $PACKAGE_VERSION of $PACKAGE_NAME is not published. Proceeding with publishing..."
+
+      - name: Upload package
+        run: npm publish
+      
+      - name: Post upload validation
+        id: unpack
+        timeout-minutes: 5
+        run: |
+          # Get the package name and version
+          PACKAGE_NAME=$(cat package.json | jq -r .name)
+          PACKAGE_VERSION=$(cat package.json | jq -r .version)
+          FULL_PACKAGE_NAME="${PACKAGE_NAME}@${PACKAGE_VERSION}"
+
+          # npm can take a few minutes to make a new version visible, so poll instead of a fixed wait
+          MAX_ATTEMPTS=12
+          RETRY_DELAY_SECONDS=15
+          POST_UPLOAD_HASH=""
+          for attempt in $(seq 1 $MAX_ATTEMPTS); do
+            echo "Waiting for package propagation (attempt $attempt/$MAX_ATTEMPTS)..."
+            sleep $RETRY_DELAY_SECONDS
+            if POST_UPLOAD_HASH=$(npm view "$FULL_PACKAGE_NAME" dist.shasum 2>/dev/null) && [ -n "$POST_UPLOAD_HASH" ]; then
+              break
             fi
-            echo "Hashes match successfully!"
+          done
+
+          if [ -z "$POST_UPLOAD_HASH" ]; then
+            echo "ERROR: $FULL_PACKAGE_NAME not available on npm after $MAX_ATTEMPTS attempts"
+            exit 1
+          fi
+
+          echo "POST_UPLOAD_HASH=$POST_UPLOAD_HASH" >> $GITHUB_OUTPUT
+          echo "POST_UPLOAD_HASH: $POST_UPLOAD_HASH"
+
+      - name: Pre and Post Upload validation
+        run: |
+          echo "Comparing hashes..."
+          echo "PRE_UPLOAD_HASH: '${{ steps.pack.outputs.PRE_UPLOAD_HASH }}'"
+          echo "POST_UPLOAD_HASH: '${{ steps.unpack.outputs.POST_UPLOAD_HASH }}'"
+
+          if [ "${{ steps.pack.outputs.PRE_UPLOAD_HASH }}" != "${{ steps.unpack.outputs.POST_UPLOAD_HASH }}" ]; then
+            echo "ERROR: Hash mismatch detected! Pre-upload hash: '${{ steps.pack.outputs.PRE_UPLOAD_HASH }}' does not match post-upload hash: '${{ steps.unpack.outputs.POST_UPLOAD_HASH }}'"
+            exit 1
+          fi
+          echo "Hashes match successfully!"
+
