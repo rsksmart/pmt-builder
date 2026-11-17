@@ -27,7 +27,7 @@
   "types": "./index.d.ts",
   "devDependencies": {
     "@rsksmart/rsk-precompiled-abis": "10.0.0-CARDAMOM",
-    "bitcoinjs-lib": "7.0.1",
+    "bitcoinjs-lib": "7.0.2",
     "ethers": "6.16.0",
     "merkle-lib": "2.0.10"
   }
