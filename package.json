@@ -20,15 +20,15 @@
     "node": ">=18"
   },
   "dependencies": {
-    "chai": "6.2.2",
+    "chai": "6.3.0",
     "dotenv": "17.4.2",
     "mocha": "11.7.6"
   },
   "types": "./index.d.ts",
   "devDependencies": {
     "@rsksmart/rsk-precompiled-abis": "10.0.0-CARDAMOM",
-    "bitcoinjs-lib": "7.0.1",
-    "ethers": "6.16.0",
-    "merkle-lib": "2.0.10"
+    "bitcoinjs-lib": "7.0.5",
+    "ethers": "6.17.0",
+    "merkle-lib": "2.0.11"
   }
 }
